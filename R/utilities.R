@@ -51,8 +51,12 @@ fc_palette <- function(fc) {
 }
 
 update_n <- function(x, showCategory) {
+    if (!is.numeric(showCategory)) {
+        return(showCategory)
+    }
+
     n <- showCategory
-    geneSets <- geneInCategory(x) ## use core gene for gsea result
+    ## geneSets <- geneInCategory(x) ## use core gene for gsea result
     if (nrow(x) < n) {
         n <- nrow(x)
     }
@@ -63,9 +67,11 @@ extract_geneSets <- function(x, n) {
     n <- update_n(x, n)
     geneSets <- geneInCategory(x) ## use core gene for gsea result
     y <- as.data.frame(x)
-    y <- y[1:n,]
     geneSets <- geneSets[y$ID]
     names(geneSets) <- y$Description
-    return(geneSets)
+    if (is.numeric(n)) {
+        return(geneSets[1:n])
+    }
+    return(geneSets[n])
 }
 
