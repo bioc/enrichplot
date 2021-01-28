@@ -52,7 +52,6 @@ setMethod("emapplot_cluster", signature(x = "compareClusterResult"),
 ##'     }
 ##'
 ##' @importFrom igraph layout_with_fr
-##' @importFrom igraph as.directed
 ##' @importFrom ggplot2 aes_
 ##' @importFrom ggplot2 scale_color_discrete
 ##' @importFrom ggplot2 scale_size_continuous
@@ -83,7 +82,7 @@ emapplot_cluster.enrichResult <- function(x, showCategory = 30,
     g <- get_igraph(x=x, y=y, n=n, color=color, cex_line=cex_line,
                     min_edge=min_edge)
     if(n == 1) {
-        return(ggraph(as.directed(g)) + geom_node_point(color="red", size=5) +
+        return(ggraph(g) + geom_node_point(color="red", size=5) +
                  geom_node_text(aes_(label=~name)))
     }
     edgee <- igraph::get.edgelist(g)
@@ -102,7 +101,7 @@ emapplot_cluster.enrichResult <- function(x, showCategory = 30,
     colnames(pdata2)[5] <- "color2"
 
     if(is.null(nCluster)){
-        pdata2$color <- kmeans(dat, ceiling(sqrt(nrow(dat))),algorithm = "Lloyd")$cluster
+        pdata2$color <- kmeans(dat, ceiling(sqrt(nrow(dat))))$cluster
     } else {
         if(nCluster > nrow(dat)) nCluster <- nrow(dat)
         pdata2$color <- kmeans(dat, nCluster)$cluster
