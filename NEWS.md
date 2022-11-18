@@ -1,3 +1,8 @@
+# enrichplot 1.18.1
+
++ fixed issue in `treeplot` (2022-11-18, Fri, #209)
++ enable `dotplot()` and `autofacet()` for `gseaResultList` object(#208) 
+
 # enrichplot 1.17.4
 
 + rename parameters of `emapplot()`, `centplot()` and  `treeplot()` (2022-09-11, Sun)
