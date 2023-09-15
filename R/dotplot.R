@@ -34,8 +34,8 @@ setMethod("dotplot", signature(object = "gseaResult"),
                         label_format = label_format, ...)
                 
                 if (NES) {
-                    p <- suppressMessages(p + aes_(color=~NES) + 
-                        scale_color_continuous(low="blue", high="red", name = "NES")
+                    p <- suppressMessages(p + aes(fill=.data$NES) + 
+                        set_enrichplot_color(type = "fill", name = "NES")
                     )
                 }
                 return(p)
@@ -105,9 +105,8 @@ setMethod("dotplot", signature(object = "gseaResultList"),
                       label_format = label_format, ...)
               
               if (NES) {
-                  p <- suppressMessages(p + aes_(color=~NES) + 
-                      scale_color_continuous(low="blue", high="red", name = "NES")
-                  )
+                  p <- p + aes(fill=.data$NES) + 
+                      set_enrichplot_color(type = "fill", name = "NES")
               }
               return(p)
 })
@@ -196,15 +195,15 @@ dotplot.enrichResult <- function(object, x = "geneRatio", color = "p.adjust",
 
     df$Description <- factor(df$Description,
                           levels=rev(unique(df$Description[idx])))
-    ggplot(df, aes_string(x=x, y="Description", size=size, color=colorBy)) +
+    p <- ggplot(df, aes_string(x=x, y="Description", size=size, fill=colorBy)) +
         geom_point() +
-        scale_color_continuous(low="red", high="blue", name = color,
-            guide=guide_colorbar(reverse=TRUE)) +
+        aes(shape = I(enrichplot_point_shape)) +
+        set_enrichplot_color(type = "fill", name = color) +
         scale_y_discrete(labels = label_func) +
         ylab(NULL) + ggtitle(title) + theme_dose(font.size) +
-        scale_size(range=c(3, 8)) +
-        guides(size  = guide_legend(order = 1),
-               color = guide_colorbar(order = 2))
+        scale_size(range=c(3, 8)) 
+    class(p) <- c("enrichplotDot", class(p))
+    return(p)
 }
 
 
@@ -267,18 +266,15 @@ dotplot.compareClusterResult <- function(object, x= "Cluster", colorBy="p.adjust
         require(ggstar, character.only=TRUE)
         # p <- p + ggsymbol::geom_symbol(aes_string(symbol = "Cluster", fill = colorBy)) +
         p <- p + ggstar::geom_star(aes_string(starshape="Cluster", fill=colorBy)) +
-            scale_fill_continuous(low="red", high="blue", guide=guide_colorbar(reverse=TRUE))
+            set_enrichplot_color(type = "fill")
     }  else {
-        p <- p +  geom_point(aes_string(color = colorBy))
+        p <- p + geom_point(aes_string(fill = colorBy)) +
+            aes(shape = I(enrichplot_point_shape))
     }
 
-    p <- p + scale_color_continuous(low="red", high="blue",
-                    guide=guide_colorbar(reverse=TRUE)) +
+    p <- p + set_enrichplot_color(type = "fill") +
         ylab(NULL) + ggtitle(title) + DOSE::theme_dose(font.size) +
-        scale_size_continuous(range=c(3, 8)) +
-        guides(size  = guide_legend(order = 1),
-                color = guide_colorbar(order = 2))
-
+        scale_size_continuous(range=c(3, 8)) 
 
     if (!is.null(facet)) {
         p <- p + facet_grid(.data[[facet]] ~ ., 
@@ -287,6 +283,7 @@ dotplot.compareClusterResult <- function(object, x= "Cluster", colorBy="p.adjust
                 labeller = ggplot2::label_wrap_gen(strip_width)) +
             theme(strip.text = element_text(size = 14))
     }
+    class(p) <- c("enrichplotDot", class(p))
     return(p)
 }
 

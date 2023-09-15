@@ -17,7 +17,7 @@ get_enrichplot_color <- function(n = 2) {
     colors <- getOption("enrichplot.colours")
     if (!is.null(colors)) return(colors)
 
-    if (n != 2 || n != 3) stop("'n' should be 2 or 3")
+    if (n != 2 && n != 3) stop("'n' should be 2 or 3")
 
     colors = c("#e06663", "#327eba")
     if (n == 2) return(colors)
@@ -84,6 +84,7 @@ which_scale_fun <- function(.fun) {
     return("continuous")
 }
 
+
 ##' @method as.data.frame compareClusterResult
 ##' @export
 as.data.frame.compareClusterResult <- function(x, ...) {
@@ -100,7 +101,7 @@ as.data.frame.compareClusterResult <- function(x, ...) {
 ##' @return a data.frame
 ##' @noRd
 prepare_pie_gene <- function(y) {
-    check_installed('tibble', 'for `prepare_pie_gene()`.')
+    rlang::check_installed('tibble', 'for `prepare_pie_gene()`.')
     gene_pie <- tibble::as_tibble(y[,c("Cluster", "Description", "geneID")])
     gene_pie$geneID <- strsplit(gene_pie$geneID, '/')
     gene_pie2 <- as.data.frame(tidyr::unnest(gene_pie, cols=geneID))
@@ -174,11 +175,12 @@ prepare_pie_data <- function(pie_data, pie = "equal",type = "category") {
 ##' color_palette(c("red", "yellow", "green"))
 ##' @author guangchuang yu
 color_palette <- function(colors) {
-    # has_package("grDevices")
     check_installed('grDevices', 'for `color_palette()`.')
     grDevices::colorRampPalette(colors)(n = 299)
 }
 
+
+enrichplot_point_shape <- ggfun:::enrichplot_point_shape
 
 sig_palette <- color_palette(c("red", "yellow", "blue"))
 
