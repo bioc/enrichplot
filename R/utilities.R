@@ -13,9 +13,6 @@ autofacet <- function(by = 'row', scales = "free", levels = NULL) {
             class = "autofacet")
 }
 
-
-
-
 get_enrichplot_color <- function(n = 2) {
     colors <- getOption("enrichplot.colours")
     if (!is.null(colors)) return(colors)
@@ -87,8 +84,6 @@ which_scale_fun <- function(.fun) {
     return("continuous")
 }
 
-
-
 ##' @method as.data.frame compareClusterResult
 ##' @export
 as.data.frame.compareClusterResult <- function(x, ...) {
@@ -100,10 +95,12 @@ as.data.frame.compareClusterResult <- function(x, ...) {
 ##' The function only works for compareClusterResult
 ##'
 ##' @importFrom DOSE geneID
+##' @importFrom rlang check_installed
 ##' @param y a data.frame converted from compareClusterResult
 ##' @return a data.frame
 ##' @noRd
 prepare_pie_gene <- function(y) {
+    check_installed('tibble', 'for `prepare_pie_gene()`.')
     gene_pie <- tibble::as_tibble(y[,c("Cluster", "Description", "geneID")])
     gene_pie$geneID <- strsplit(gene_pie$geneID, '/')
     gene_pie2 <- as.data.frame(tidyr::unnest(gene_pie, cols=geneID))
@@ -171,12 +168,14 @@ prepare_pie_data <- function(pie_data, pie = "equal",type = "category") {
 ##' @title color_palette
 ##' @param colors colors of length >=2
 ##' @return color vector
+##' @importFrom rlang check_installed
 ##' @export
 ##' @examples
 ##' color_palette(c("red", "yellow", "green"))
 ##' @author guangchuang yu
 color_palette <- function(colors) {
     # has_package("grDevices")
+    check_installed('grDevices', 'for `color_palette()`.')
     grDevices::colorRampPalette(colors)(n = 299)
 }
 
@@ -403,10 +402,12 @@ get_label_diss <- function(dimension, label_location) {
 #' @noRd
 #' @importFrom yulab.utils str_wrap
 default_labeller <- function(n) {
-    function(str){
+    fun <- function(str){
         str <- gsub("_", " ", str)
         yulab.utils::str_wrap(str, n)
     }
+    
+    structure(fun, class = "labeller")
 }
 
 # from hadley wickham in "https://r.789695.n4.nabble.com/Suppressing-output-e-g-from-cat-td859876.html"
