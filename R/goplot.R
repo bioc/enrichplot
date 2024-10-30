@@ -17,16 +17,16 @@ setMethod("goplot", signature(x = "gseaResult"),
           })
 
 
-##' @rdname goplot
+
 ##' @importFrom utils data
 ##' @import GOSemSim
 ##' @importFrom ggplot2 scale_fill_gradientn
 ##' @importFrom grid arrow
 ##' @importFrom grid unit
 ##' @importFrom rlang check_installed
-##' @author Guangchuang Yu
 goplot.enrichResult <- function(x, showCategory = 10, color = "p.adjust",
-                                layout = igraph::layout_with_sugiyama, geom = "text", ...) {
+                                layout = igraph::layout_with_sugiyama, geom = "text", 
+                                ID = "Description", ...) {
     segment.size <- get_ggrepel_segsize()
     # has_package("AnnotationDbi")
     n <- update_n(x, showCategory)
@@ -76,12 +76,18 @@ goplot.enrichResult <- function(x, showCategory = 10, color = "p.adjust",
             arrow = arrow(length = unit(2, 'mm')),
             colour="darkgrey", position=position) 
 
+    if (ID == "Description" || ID == "ID") {
+        ID <- sprintf("{%s}", ID)
+    } 
+
     if (geom == "label") {
-        p <- p + geom_label_repel(aes(label=.data$label, fill=.data$color, segment.size = segment.size)) +
+        p <- p + geom_label_repel(aes(label= glue::glue(ID, ID=.data[['name']], Description=.data[['Term']]), 
+                        fill=.data$color, segment.size = segment.size)) +
             set_enrichplot_color(type = "fill", name = color, na.value="white")
     } else {
         p <- p + geom_point(aes(color=.data$color), size=5) +
-            geom_text_repel(aes(label=.data$label), segment.size = segment.size, bg.color="white", bg.r=.1) +
+            geom_text_repel(aes(label=glue::glue(ID, ID=.data[['name']], Description=.data[['Term']])), 
+                    segment.size = segment.size, bg.color="white", bg.r=.1) +
             set_enrichplot_color(type = "color", name = color, na.value="grey")
     }        
         
