@@ -47,7 +47,7 @@ ridgeplot.gseaResult <- function(x, showCategory=30, fill="p.adjust",
     if (core_enrichment) {
         gs2id <- geneInCategory(x)[selected]
     } else {
-        gs2id <- x@geneSets[x$ID[selected]]
+        gs2id <- x@geneSets[x$ID %in% selected]
     }
 
     if (x@readable && length(x@gene2Symbol) > 0) {
