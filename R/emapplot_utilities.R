@@ -108,7 +108,12 @@ build_emap_graph <- function(enrichDf, geneSets, color, cex_line, min_edge,
     idx <- unlist(sapply(V(g)$name, function(x) which(x == enrichDf$Description)))
     cnt <- sapply(geneSets[idx], length)
     V(g)$size <- cnt
-    colVar <- enrichDf[idx, color]
+    if (color %in% names(enrichDf)) {
+        colVar <- enrichDf[idx, color]
+    } else {
+        colVar <- color
+    }
+    
     V(g)$color <- colVar
     return(g)
 }
@@ -141,7 +146,7 @@ get_igraph <- function(x, nCategory, color, cex_line, min_edge){
         stop("no enriched term found...")
     }
 
-    g <- build_emap_graph(enrichDf = y, geneSets = geneSets, color = color,
+    build_emap_graph(enrichDf = y, geneSets = geneSets, color = color,
              cex_line = cex_line, min_edge = min_edge,
              pair_sim = x@termsim, method = x@method)
 }
@@ -494,12 +499,13 @@ add_ellipse <- function(p, group_legend, label_style,
     
     if (ellipse_style == "ggforce") {
         if (label_style == "shadowtext") {
-            p <- p + ggforce::geom_mark_ellipse(aes_(x =~ x, y =~ y, color =~ color2,
-                        fill =~ color2), alpha = alpha, show.legend = show_legend)
+            p <- p + ggforce::geom_mark_ellipse(
+                        aes(x = .data$x, y = .data$y, fill = .data$color2), 
+                        alpha = alpha, color = NA, show.legend = show_legend)
         } else {
-            p <- p + ggforce::geom_mark_ellipse(aes_(x =~ x, y =~ y, color =~ color2,
-                        fill =~ color2, label =~ color2), alpha = alpha,
-                        show.legend = show_legend)
+            p <- p + ggforce::geom_mark_ellipse(
+                        aes(x = .data$x, y = .data$y, fill = .data$color2, label = .data$color2), 
+                        alpha = alpha, color = NA, show.legend = show_legend)
         }
         if (group_legend) p <- p + scale_fill_discrete(name = "groups")
      } 
