@@ -107,17 +107,24 @@ cnetplot.compareClusterResult <- function(
 #' @importFrom ggplot2 coord_fixed
 add_node_pie <- function(p, d, pie = "equal", pie_scale = 1) {
     dd <- d[,c('Cluster', 'Description', 'Count')]
+    pathway_size <- sapply(split(dd$Count, dd$Description), sum)
     if (pie == "equal") dd$Count <- 1
-    dd <- tidyr::pivot_wider(dd, names_from=.data$Cluster, values_from=.data$Count, values_fill=0)
-    
+    dd <- tidyr::pivot_wider(dd, names_from="Cluster", values_from="Count", values_fill=0)
+    dd$pathway_size <- sqrt(pathway_size[dd$Description]/sum(pathway_size))
+
+
     p <- p %<+% dd +
-        scatterpie::geom_scatterpie(cols=as.character(unique(d$Cluster)), 
+        scatterpie::geom_scatterpie(aes(x=.data$x, y=.data$y, r=.data$pathway_size), 
+            cols=as.character(unique(d$Cluster)), 
             legend_name = "Cluster", color=NA, pie_scale = pie_scale) +
+        scatterpie::geom_scatterpie_legend(dd$pathway_size, x=min(p$data$x), y=min(p$data$y), n=3,
+            labeller=function(x) round(sum(pathway_size) * x^2)) +
         coord_fixed() +
-        guides(size = "none")
+        guides(size = "none") 
 
     return(p)
 }
+
 
 tidy_compareCluster <- function(x, showCategory) {
     d <- fortify(x, showCategory = showCategory, includeAll = TRUE, split = NULL)
