@@ -40,10 +40,16 @@ goplot.enrichResult <- function(x, showCategory = 10, color = "p.adjust",
     .GOSemSimEnv <- get(".GOSemSimEnv", envir=.GlobalEnv)
     gotbl <- get("gotbl", envir=.GOSemSimEnv)
     if (inherits(x, "gseaResult")) {
-        GOANCESTOR <- getAncestors(x@setType)
+        onto <- x@setType
     } else {
-        GOANCESTOR <- getAncestors(x@ontology)
+        onto <- x@ontology
     }
+
+    if (!toupper(onto) %in% c("MF", "CC", "BF")) {
+        stop("Ontology should be one of 'MF', 'CC' or 'BF'")
+    }
+
+    GOANCESTOR <- getAncestors(onto)
     
     anc <- GOANCESTOR[id] 
     ca <- anc[[1]]
