@@ -100,11 +100,11 @@ Will be removed in the next version.}
 \item{label_format}{a numeric value sets wrap length, alternatively a
 custom function to format axis labels.}
 
-\item{label_format_cladelab}{label_format for group labels, a numeric value sets wrap length, 
+\item{label_format_cladelab}{label_format for group labels, a numeric value sets wrap length,
 alternatively a custom function to format axis labels.
 Will be removed in the next version.}
 
-\item{label_format_tiplab}{label_format for tiplabs, a numeric value sets wrap length, 
+\item{label_format_tiplab}{label_format for tiplabs, a numeric value sets wrap length,
 alternatively a custom function to format axis labels.
 Will be removed in the next version.}
 
@@ -118,14 +118,14 @@ meaning 1 * 1.2 * x_range_of_tree plus distance_between_tree_and_tiplab
 (1 * (1.2 * x_range_of_tree + distance_between_tree_and_tiplab)).
 Will be removed in the next version.}
 
-\item{offset_tiplab}{tiplab offset, rel object or numeric value, the bigger the number, 
-the farther the distance between the node and the branch. 
-The default is rel(1), when geneClusterPanel = "pie", meaning 1 *  max_radius_of_the_pies; 
+\item{offset_tiplab}{tiplab offset, rel object or numeric value, the bigger the number,
+the farther the distance between the node and the branch.
+The default is rel(1), when geneClusterPanel = "pie", meaning 1 *  max_radius_of_the_pies;
 when geneClusterPanel = "heatMap", meaning 1 * 0.16 * column_number_of_heatMap * x_range_of_tree;
 when geneClusterPanel = "dotplot", meaning 1 * 0.09 * column_number_of_dotplot * x_range_of_tree.
 Will be removed in the next version.}
 
-\item{hclust_method}{Method of hclust. This should be (an unambiguous abbreviation of) one of "ward.D", 
+\item{hclust_method}{Method of hclust. This should be (an unambiguous abbreviation of) one of "ward.D",
 "ward.D2", "single", "complete", "average" (= UPGMA), "mcquitty" (= WPGMA), "median" (= WPGMC) or "centroid" (= UPGMC).
 Will be removed in the next version.}
 
@@ -162,9 +162,9 @@ offset.params control the attributes of offset, it can be referred to the follow
         offset of bar and text from the clade, default is rel(1),
         meaning 1 * 1.2 * x_range_of_tree plus distance_between_tree_and_tiplab
         (1 * (1.2 * x_range_of_tree + distance_between_tree_and_tiplab)).
-        \item \code{tiplab} tiplab offset, rel object or numeric value, the bigger the number, 
-        the farther the distance between the node and the branch. 
-        The default is rel(1), when clusterPanel = "pie", meaning 1 *  max_radius_of_the_pies; 
+        \item \code{tiplab} tiplab offset, rel object or numeric value, the bigger the number,
+        the farther the distance between the node and the branch.
+        The default is rel(1), when clusterPanel = "pie", meaning 1 *  max_radius_of_the_pies;
         when clusterPanel = "heatMap", meaning 1 * 0.16 * column_number_of_heatMap * x_range_of_tree;
         when clusterPanel = "dotplot", meaning 1 * 0.09 * column_number_of_dotplot * x_range_of_tree.
         \item \code{extend} Numeric, extend the length of bar, default is 0.3.
@@ -177,7 +177,7 @@ cluster.params control the attributes of highlight, it can be referred to the fo
     \itemize{
         \item \code{method} function of Clustering method, such as stats::kmeans(the default),
         cluster::clara, cluster::fanny or cluster::pam.
-        \item \code{n} Numeric, the number of clusters, 
+        \item \code{n} Numeric, the number of clusters,
         the default value is square root of the number of nodes.
         \item \code{color} A vector of group colors, the length of the vector should be the same as nCluster.
         \item \code{label_words_n} Numeric, the number of words in the cluster tags, the default value is 4.
@@ -187,7 +187,7 @@ cluster.params control the attributes of highlight, it can be referred to the fo
 
 \item{split}{Separate result by 'category' variable.}
 
-\item{pie}{Used only when geneClusterPanel = "pie", 
+\item{pie}{Used only when geneClusterPanel = "pie",
 proportion of clusters in the pie chart, one of 'equal' (default) and 'Count'.
 Will be removed in the next version.}
 
@@ -202,7 +202,7 @@ see the clusterPanel.params in the following.
 clusterPanel.params control the attributes of cluster panel, it can be referred to the following parameters:
     \itemize{
         \item \code{clusterPanel} one of "heatMap"(default), "dotplot", "pie".
-        \item \code{pie} pUsed only when ClusterPanel = "pie", 
+        \item \code{pie} pUsed only when ClusterPanel = "pie",
         proportion of clusters in the pie chart, one of 'equal' (default) and 'Count'.
         \item \code{legend_n} number of circle in legend.
         \item \code{colnames_angle} set the angle of colnames.
