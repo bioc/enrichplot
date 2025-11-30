@@ -1,5 +1,5 @@
-##' @rdname heatplot
-##' @exportMethod heatplot
+#' @rdname heatplot
+#' @exportMethod heatplot
 setMethod(
     "heatplot",
     signature(x = "enrichResult"),
@@ -8,8 +8,8 @@ setMethod(
     }
 )
 
-##' @rdname heatplot
-##' @exportMethod heatplot
+#' @rdname heatplot
+#' @exportMethod heatplot
 setMethod(
     "heatplot",
     signature(x = "gseaResult"),
@@ -19,24 +19,27 @@ setMethod(
 )
 
 
-##' @rdname heatplot
-##' @importFrom ggplot2 geom_tile
-##' @importFrom ggplot2 theme_minimal
-##' @importFrom ggplot2 theme
-##' @importFrom ggplot2 element_blank
-##' @importFrom ggplot2 element_text
-##' @importFrom ggplot2 scale_y_discrete
-##' @importFrom ggplot2 scale_fill_gradient2
-##' @importFrom rlang check_installed
-##' @param label_format a numeric value sets wrap length, alternatively a
-##' custom function to format axis labels.
-##' @param symbol symbol of the nodes, one of "rect"(the default) and "dot"
-##' by default wraps names longer that 30 characters
-##' @param pvalue pvalue of genes
-##' @author Guangchuang Yu
+#' @rdname heatplot
+#' @importFrom ggplot2 geom_tile
+#' @importFrom ggplot2 theme_minimal
+#' @importFrom ggplot2 theme
+#' @importFrom ggplot2 element_blank
+#' @importFrom ggplot2 element_text
+#' @importFrom ggplot2 scale_y_discrete
+#' @importFrom ggplot2 scale_fill_gradient2
+#' @importFrom rlang check_installed
+#' @param showTop number of top genes ranked by abs(foldChange) * frequency
+#' to be shown in the heatmap, default NULL means all genes are shown
+#' @param label_format a numeric value sets wrap length, alternatively a
+#' custom function to format axis labels.
+#' @param symbol symbol of the nodes, one of "rect"(the default) and "dot"
+#' by default wraps names longer that 30 characters
+#' @param pvalue pvalue of genes
+#' @author Guangchuang Yu
 heatplot.enrichResult <- function(
     x,
     showCategory = 30,
+    showTop = NULL,
     symbol = "rect",
     foldChange = NULL,
     pvalue = NULL,
@@ -50,6 +53,12 @@ heatplot.enrichResult <- function(
 
     n <- update_n(x, showCategory)
     geneSets <- extract_geneSets(x, n)
+    if (!is.null(showTop) && showTop > 0) {
+        nfreq <- table(unlist(geneSets))
+        nfc <- nfreq * abs(foldChange[names(nfreq)])
+        topgenes <- head(names(sort(nfc, decreasing = TRUE)), showTop)
+        geneSets <- lapply(geneSets, function(s) intersect(s, topgenes))
+    }
     foldChange <- fc_readable(x, foldChange)
     pvalue <- fc_readable(x, pvalue)
     d <- list2df(geneSets)
@@ -91,6 +100,7 @@ heatplot.enrichResult <- function(
 
         return(p)
     }
+
     # copy from https://stackoverflow.com/questions/11053899/how-to-get-a-reversed-log10-scale-in-ggplot2
     reverselog_trans <- function(base = exp(1)) {
         trans <- function(x) -log(x, base)
@@ -122,14 +132,13 @@ heatplot.enrichResult <- function(
 
     if (!is.null(foldChange)) {
         p <- p +
-            aes(fill = .data$foldChange) +
+            aes(fill = !!sym('foldChange')) +
             set_enrichplot_color(
                 colors = get_enrichplot_color(3),
                 type = "fill",
+                reverse = FALSE,
                 transform = 'identity'
             )
-        # scale_fill_gradient2(name = "fold change", low = "#327eba",
-        #                    mid = "white", high = "#e06663") +
     }
 
     p +

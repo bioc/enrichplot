@@ -26,10 +26,8 @@ emapplot_internal(
   color_edge = "grey",
   size_edge = 0.5,
   node_label = "category",
+  node_label_size = 5,
   pie = "equal",
-  group = FALSE,
-  group_style = "ggforce",
-  label_group_style = "shawdowtext",
   label_format = 30,
   clusterFunction = stats::kmeans,
   nWords = 4,
@@ -41,8 +39,8 @@ emapplot_internal(
 
 \item{...}{Additional parameters}
 
-\item{showCategory}{A number or a vector of terms. If it is a number, 
-the first n terms will be displayed. If it is a vector of terms, 
+\item{showCategory}{A number or a vector of terms. If it is a number,
+the first n terms will be displayed. If it is a vector of terms,
 the selected terms will be displayed.}
 
 \item{layout}{igraph layout}
@@ -52,7 +50,7 @@ the selected terms will be displayed.}
 
 \item{size_category}{relative size of the categories}
 
-\item{min_edge}{The minimum similarity threshold for whether 
+\item{min_edge}{The minimum similarity threshold for whether
 two nodes are connected, should between 0 and 1, default value is 0.2.}
 
 \item{color_edge}{color of the network edge}
@@ -62,13 +60,9 @@ two nodes are connected, should between 0 and 1, default value is 0.2.}
 \item{node_label}{Select which labels to be displayed,
 one of 'category', 'group', 'all' and 'none'.}
 
+\item{node_label_size}{size of node label, default is 5.}
+
 \item{pie}{one of 'equal' or 'Count' to set the slice ratio of the pies}
-
-\item{group}{logical, if TRUE, group the category.}
-
-\item{group_style}{style of ellipse, one of "ggforce" an "polygon".}
-
-\item{label_group_style}{style of group label, one of "shadowtext" and "ggforce".}
 
 \item{label_format}{a numeric value sets wrap length, alternatively a custom function to format axis labels.}
 
@@ -77,7 +71,7 @@ cluster::clara, cluster::fanny or cluster::pam.}
 
 \item{nWords}{Numeric, the number of words in the cluster tags, the default value is 4.}
 
-\item{nCluster}{Numeric, the number of clusters, 
+\item{nCluster}{Numeric, the number of clusters,
 the default value is square root of the number of nodes.}
 }
 \value{
@@ -90,11 +84,11 @@ over-representation test or gene set enrichment analysis
 \details{
 This function visualizes gene sets as a network (i.e. enrichment map).
 Mutually overlapping gene sets tend to cluster together, making it
-easier for interpretation. When the similarity between terms meets 
+easier for interpretation. When the similarity between terms meets
 a certain threshold (default is 0.2, adjusted by parameter `min_edge`),
-there will be edges between terms. The stronger the similarity, 
-the shorter and thicker the edges. The similarity between terms is 
-obtained by function `pairwise_termsim`, the details of similarity 
+there will be edges between terms. The stronger the similarity,
+the shorter and thicker the edges. The similarity between terms is
+obtained by function `pairwise_termsim`, the details of similarity
 calculation can be found in its documentation: \link{pairwise_termsim}.
 }
 \examples{

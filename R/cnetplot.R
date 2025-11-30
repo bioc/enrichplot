@@ -13,6 +13,7 @@
 #' @param size_edge relative size of edge
 #' @param node_label one of 'all', 'none', 'category', 'item', 'exclusive' or 'share'
 #' @param foldChange numeric values to color the item (e.g, foldChange of gene expression values)
+#' @param fc_threshold threshold for filtering genes by absolute fold change (e.g., fc_threshold = 1 keeps only genes with |foldChange| > 1)
 #' @param hilight selected category to be highlighted
 #' @param hilight_alpha transparent value for not selected to be highlight
 #' @param ... additional parameters
@@ -33,6 +34,7 @@ cnetplot.enrichResult <- function(
     size_edge = .5,
     node_label = "all",
     foldChange = NULL,
+    fc_threshold = NULL,
     hilight = "none",
     hilight_alpha = .3,
     ...
@@ -45,6 +47,7 @@ cnetplot.enrichResult <- function(
         layout = layout,
         showCategory = showCategory,
         foldChange = foldChange,
+        fc_threshold = fc_threshold,
         color_category = color_category,
         size_category = size_category,
         color_item = color_item,
@@ -95,6 +98,7 @@ cnetplot.compareClusterResult <- function(
     size_edge = .5,
     node_label = "all",
     foldChange = NULL,
+    fc_threshold = NULL,
     hilight = "none",
     hilight_alpha = .3,
     pie = "equal",
@@ -109,6 +113,7 @@ cnetplot.compareClusterResult <- function(
         layout = layout,
         showCategory = length(gs),
         foldChange = foldChange,
+        fc_threshold = fc_threshold,
         color_category = color_category,
         size_category = 0,
         color_item = color_item,
