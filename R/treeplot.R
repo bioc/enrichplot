@@ -435,7 +435,7 @@ create_tree_plot <- function(
     p <- groupClade(p, clades, "group") +
         aes(color = .data$group) +
         scale_color_manual(
-            values = c(group_color, "white"),
+            values = c(group_color, "grey50"),
             breaks = names(clades)
         )
 
