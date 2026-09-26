@@ -499,7 +499,7 @@ create_tree_plot <- function(
         scale_color_manual(
             values = group_color,
             breaks = names(group_color),
-            na.value = "white"
+            na.value = "grey50"
         )
 
     # Add tip points and labels
