@@ -279,37 +279,60 @@ build_emap_graph <- function(
     wd <- reshape2::melt(w)
     wd <- wd[wd[, 1] != wd[, 2], , drop = FALSE]
     wd <- wd[!is.na(wd[, 3]), , drop = FALSE]
+    raw_edge_df <- wd
     keep <- filter_emap_edges(
-        wd, edge_filter = edge_filter, min_edge = min_edge,
+        raw_edge_df, edge_filter = edge_filter, min_edge = min_edge,
         top_k = top_k, target_density = target_density
     )
-    edge_df <- wd[keep, , drop = FALSE]
-    if (edge_filter != "threshold" && nrow(edge_df) > 0) {
-        key <- paste(
-            pmin(as.character(edge_df[, 1]), as.character(edge_df[, 2])),
-            pmax(as.character(edge_df[, 1]), as.character(edge_df[, 2])),
-            sep = "\\r"
-        )
-        edge_df <- edge_df[!duplicated(key), , drop = FALSE]
-    }
 
-    vertex_df <- data.frame(
-        name = unique(as.character(enrichDf$Description)),
-        stringsAsFactors = FALSE
-    )
-    g <- igraph::graph_from_data_frame(
-        edge_df[, -3, drop = FALSE], directed = FALSE, vertices = vertex_df
-    )
-    if (igraph::ecount(g) > 0) {
-        E(g)$width <- sqrt(edge_df[, 3] * 5) * cex_line
-        E(g)$weight <- edge_df[, 3]
-    }
-    idx <- match(V(g)$name, as.character(enrichDf$Description))
-    V(g)$size <- lengths(geneSets[idx])
-    V(g)$color <- if (color %in% names(enrichDf)) {
-        enrichDf[idx, color]
+    if (edge_filter == "threshold") {
+        # Keep the release branch's default graph construction exactly: build
+        # from all matrix cells, then remove sub-threshold edges. This retains
+        # the historical behavior for empty or disconnected maps.
+        g <- igraph::graph_from_data_frame(
+            raw_edge_df[, -3, drop = FALSE], directed = FALSE
+        )
+        E(g)$width <- sqrt(raw_edge_df[, 3] * 5) * cex_line
+        E(g)$weight <- raw_edge_df[, 3]
+        g <- igraph::delete_edges(g, E(g)[raw_edge_df[, 3] < min_edge])
+        idx <- unlist(lapply(V(g)$name, function(label) {
+            which(label == enrichDf$Description)
+        }))
+        V(g)$size <- lengths(geneSets[idx])
+        V(g)$color <- if (color %in% names(enrichDf)) {
+            enrichDf[idx, color]
+        } else {
+            color
+        }
     } else {
-        color
+        edge_df <- raw_edge_df[keep, , drop = FALSE]
+        if (nrow(edge_df) > 0) {
+            key <- paste(
+                pmin(as.character(edge_df[, 1]), as.character(edge_df[, 2])),
+                pmax(as.character(edge_df[, 1]), as.character(edge_df[, 2])),
+                sep = "\\r"
+            )
+            edge_df <- edge_df[!duplicated(key), , drop = FALSE]
+        }
+        vertex_df <- data.frame(
+            name = unique(as.character(enrichDf$Description)),
+            stringsAsFactors = FALSE
+        )
+        g <- igraph::graph_from_data_frame(
+            edge_df[, -3, drop = FALSE], directed = FALSE,
+            vertices = vertex_df
+        )
+        if (igraph::ecount(g) > 0) {
+            E(g)$width <- sqrt(edge_df[, 3] * 5) * cex_line
+            E(g)$weight <- edge_df[, 3]
+        }
+        idx <- match(V(g)$name, as.character(enrichDf$Description))
+        V(g)$size <- lengths(geneSets[idx])
+        V(g)$color <- if (color %in% names(enrichDf)) {
+            enrichDf[idx, color]
+        } else {
+            color
+        }
     }
     diagnostic <- emapplot_edge_density(
         w, min_edge = min_edge, edge_filter = edge_filter,
