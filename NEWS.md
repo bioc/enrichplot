@@ -1,3 +1,8 @@
+# enrichplot 1.32.0
+
++ backport opt-in `top_k` and `adaptive` edge filtering for `emapplot()`/`ssplot()` and add `emapplot_edge_density()` for graph-density diagnostics; the default threshold behavior remains unchanged (2026-09-27, Sun)
++ expose `min_edge` and `size_edge` in `ssplot()` and clarify that classical MDS is one available dimension-reduction method (2026-09-27, Sun)
+
 # enrichplot 1.31.5
 
 + `cnetplot.compareClusterResult()` now supports `categorySizeBy` for category pie sizing and aligns docs with `ggtangle::cnetplot()` semantics (2026-04-22, Wed)

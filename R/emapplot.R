@@ -36,6 +36,14 @@ setMethod(
 #' @param size_category relative size of the categories
 #' @param min_edge The minimum similarity threshold for whether
 #' two nodes are connected, should be between 0 and 1, default value is 0.2.
+#' @param min_edge The minimum similarity threshold for whether two nodes are
+#' connected, between 0 and 1 (default 0.2).
+#' @param edge_filter Edge filtering strategy: `"threshold"` (default),
+#' `"top_k"`, or `"adaptive"`.
+#' @param top_k Number of strongest neighbors per term in top-k mode.
+#' @param target_density Target proportion of unique term pairs in adaptive mode.
+#' @param edge_diagnostic Logical; attach a density data.frame to the returned
+#' plot when `TRUE`.
 #' @param color_edge color of the network edge
 #' @param size_edge relative size of edge width
 #' @param node_label Select which labels to display,
@@ -59,10 +67,15 @@ setMethod(
 emapplot_internal <- function(
     x,
     layout = igraph::layout_with_kk,
+    coords = NULL,
     showCategory = 30,
     color = "p.adjust",
     size_category = 1,
     min_edge = .2,
+    edge_filter = "threshold",
+    top_k = 5,
+    target_density = .1,
+    edge_diagnostic = FALSE,
     color_edge = "grey",
     size_edge = .5,
     node_label = "category",
@@ -79,7 +92,10 @@ emapplot_internal <- function(
             showCategory = showCategory,
             color = color,
             min_edge = min_edge,
-            size_edge = size_edge
+            size_edge = size_edge,
+            edge_filter = edge_filter,
+            top_k = top_k,
+            target_density = target_density
         )
     } else {
         gg <- graph_from_enrichResult(
@@ -87,13 +103,31 @@ emapplot_internal <- function(
             showCategory = showCategory,
             color = color,
             min_edge = min_edge,
-            size_edge = size_edge
+            size_edge = size_edge,
+            edge_filter = edge_filter,
+            top_k = top_k,
+            target_density = target_density
         )
     }
 
     g <- gg$graph
     size <- vapply(gg$geneSet, length, FUN.VALUE = numeric(1))
     V(g)$size = size[V(g)$name]
+
+    if (!is.null(coords)) {
+        coords <- as.data.frame(coords)
+        if (!all(c("x", "y") %in% colnames(coords))) {
+            stop("`coords` must contain `x` and `y` columns.")
+        }
+        coords <- coords[, c("x", "y"), drop = FALSE]
+        if (is.null(rownames(coords))) {
+            stop("`coords` must use node labels as row names.")
+        }
+        layout_coords <- coords
+        layout <- function(graph) {
+            as.matrix(layout_coords[igraph::V(graph)$name, c("x", "y"), drop = FALSE])
+        }
+    }
 
     p <- ggplot(g, layout = layout) +
         geom_edge(color = color_edge, linewidth = size_edge)
@@ -179,12 +213,18 @@ emapplot_internal <- function(
             )
     }
 
-    p +
+    p <- p +
         coord_equal() +
         guides(
             size = guide_legend(order = 1),
             color = guide_colorbar(order = 2)
         )
+    if (isTRUE(edge_diagnostic)) {
+        attr(p, "enrichplot_edge_diagnostic") <- igraph::graph_attr(
+            g, "enrichplot_edge_diagnostic"
+        )
+    }
+    p
 }
 
 graph_from_enrichResult <- function(
@@ -192,7 +232,10 @@ graph_from_enrichResult <- function(
     showCategory = 30,
     color = "p.adjust",
     min_edge = .2,
-    size_edge = .5
+    size_edge = .5,
+    edge_filter = "threshold",
+    top_k = 5,
+    target_density = .1
 ) {
     n <- update_n(x, showCategory)
     y <- as.data.frame(x)
@@ -202,7 +245,10 @@ graph_from_enrichResult <- function(
         nCategory = n,
         color = color,
         cex_line = size_edge,
-        min_edge = min_edge
+        min_edge = min_edge,
+        edge_filter = edge_filter,
+        top_k = top_k,
+        target_density = target_density
     )
     gs <- extract_geneSets(x, n)
     return(list(graph = g, geneSet = gs))
@@ -213,7 +259,10 @@ graph_from_compareClusterResult <- function(
     showCategory = 30,
     color = "p.adjust",
     min_edge = .2,
-    size_edge = .5
+    size_edge = .5,
+    edge_filter = "threshold",
+    top_k = 5,
+    target_density = .1
 ) {
     d <- tidy_compareCluster(x, showCategory)
     mergedEnrichDf <- merge_compareClusterResult(d)
@@ -229,7 +278,10 @@ graph_from_compareClusterResult <- function(
         cex_line = size_edge,
         min_edge = min_edge,
         pair_sim = x@termsim,
-        method = x@method
+        method = x@method,
+        edge_filter = edge_filter,
+        top_k = top_k,
+        target_density = target_density
     )
     return(list(graph = g, geneSet = gs, data = d))
 }

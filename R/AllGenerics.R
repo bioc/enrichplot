@@ -414,8 +414,13 @@ setGeneric("treeplot", function(x, ...) {
 #'
 #' @title ssplot
 #' @rdname ssplot
-#' @inheritParams emapplot
-#' @return ggplot object
+#' @param drfun Function used for dimension reduction. The default,
+#'   `stats::cmdscale`, performs classical multidimensional scaling (MDS) and is
+#'   one available reduction method.
+#' @param dr.params Named list of arguments passed separately to `drfun` via
+#'   `tidydr::dr`.
+#' @param min_edge Minimum similarity threshold for connecting two nodes.
+#' @param size_edge Relative size of edge width.
 #' @export
 #' @examples
 #' \dontrun{
@@ -439,7 +444,13 @@ setGeneric("treeplot", function(x, ...) {
 #'     ssplot(ego2)
 #' }
 #' @author Guangchuang Yu
-setGeneric("ssplot", function(x, ...) {
+setGeneric("ssplot", function(
+    x,
+    showCategory = 30,
+    ...,
+    min_edge = .2,
+    size_edge = .5
+) {
     standardGeneric("ssplot")
 })
 

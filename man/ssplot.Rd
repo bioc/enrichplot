@@ -9,13 +9,13 @@
 \alias{ssplot.compareClusterResult}
 \title{ssplot}
 \usage{
-ssplot(x, ...)
+ssplot(x, showCategory = 30, ..., min_edge = 0.2, size_edge = 0.5)
 
-\S4method{ssplot}{enrichResult}(x, showCategory = 30, ...)
+\S4method{ssplot}{enrichResult}(x, showCategory = 30, ..., min_edge = 0.2, size_edge = 0.5)
 
-\S4method{ssplot}{gseaResult}(x, showCategory = 30, ...)
+\S4method{ssplot}{gseaResult}(x, showCategory = 30, ..., min_edge = 0.2, size_edge = 0.5)
 
-\S4method{ssplot}{compareClusterResult}(x, showCategory = 30, ...)
+\S4method{ssplot}{compareClusterResult}(x, showCategory = 30, ..., min_edge = 0.2, size_edge = 0.5)
 
 ssplot.enrichResult(
   x,
@@ -23,6 +23,8 @@ ssplot.enrichResult(
   drfun = NULL,
   dr.params = list(),
   node_label = "group",
+  min_edge = 0.2,
+  size_edge = 0.5,
   ...
 )
 
@@ -33,6 +35,8 @@ ssplot.compareClusterResult(
   drfun = NULL,
   dr.params = list(),
   node_label = "group",
+  min_edge = 0.2,
+  size_edge = 0.5,
   ...
 )
 }
@@ -45,10 +49,13 @@ Additional plotting parameters are inherited from \code{\link[=emapplot]{emapplo
 
 \item{showCategory}{number of categories to display or a vector of terms.}
 
-\item{drfun}{The function used for dimension reduction,
-e.g. \code{stats::cmdscale} (the default), \code{vegan::metaMDS}, or \code{ape::pcoa}.}
+\item{drfun}{Function used for dimension reduction. The default, \code{stats::cmdscale}, performs classical multidimensional scaling (MDS) and is one available reduction method.}
 
-\item{dr.params}{list, the parameters of \code{tidydr::dr}.}
+\item{dr.params}{Named list of arguments passed separately to \code{drfun} via \code{tidydr::dr}.}
+
+\item{min_edge}{Minimum similarity threshold for connecting two nodes.}
+
+\item{size_edge}{Relative size of edge width.}
 
 \item{node_label}{Select which labels to display,
 one of 'category', 'group', 'all' and 'none'.}

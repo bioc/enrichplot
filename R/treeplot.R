@@ -574,9 +574,10 @@ add_clade_labels <- function(
 #' @return filled similarity matrix
 #' @noRd
 fill_termsim <- function(x, keep) {
-    termsim <- x@termsim[keep, keep]
+    termsim <- x@termsim[keep, keep, drop = FALSE]
     termsim[which(is.na(termsim))] <- 0
     termsim2 <- termsim + t(termsim)
+    dimnames(termsim2) <- dimnames(termsim)
     diag(termsim2) <- 1
     return(termsim2)
 }

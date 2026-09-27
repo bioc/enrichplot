@@ -19,10 +19,15 @@ emapplot(x, ...)
 emapplot_internal(
   x,
   layout = igraph::layout_with_kk,
+  coords = NULL,
   showCategory = 30,
   color = "p.adjust",
   size_category = 1,
   min_edge = 0.2,
+  edge_filter = "threshold",
+  top_k = 5,
+  target_density = 0.1,
+  edge_diagnostic = FALSE,
   color_edge = "grey",
   size_edge = 0.5,
   node_label = "category",
@@ -41,6 +46,8 @@ emapplot_internal(
 
 \item{showCategory}{number of categories to display or a vector of terms.}
 
+\item{coords}{Optional coordinate data.frame with \code{x}, \code{y} columns and row names matching node labels.}
+
 \item{layout}{igraph layout}
 
 \item{color}{Variable used to color enriched terms, e.g. 'pvalue',
@@ -50,6 +57,14 @@ emapplot_internal(
 
 \item{min_edge}{The minimum similarity threshold for whether
 two nodes are connected, should be between 0 and 1, default value is 0.2.}
+
+\item{edge_filter}{Edge filtering strategy: \code{"threshold"} (default), \code{"top_k"}, or \code{"adaptive"}.}
+
+\item{top_k}{Number of strongest neighbors per term in top-k mode.}
+
+\item{target_density}{Target proportion of unique term pairs in adaptive mode.}
+
+\item{edge_diagnostic}{Logical; attach a density data.frame to the returned plot when \code{TRUE}.}
 
 \item{color_edge}{color of the network edge}
 

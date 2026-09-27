@@ -60,7 +60,155 @@ has_pairsim <- function(x) {
 }
 
 
-#' Get graph_from_data_frame() result
+#' Filter and diagnose enrichment-map edges
+#'
+#' @param edge_data data.frame whose first two columns identify terms and whose
+#'   third column contains similarities.
+#' @param edge_filter one of `"threshold"`, `"top_k"`, or `"adaptive"`.
+#' @param min_edge minimum similarity floor.
+#' @param top_k strongest neighbors per term in top-k mode.
+#' @param target_density target proportion of unique pairs in adaptive mode.
+#' @noRd
+filter_emap_edges <- function(
+    edge_data,
+    edge_filter = "threshold",
+    min_edge = .2,
+    top_k = 5,
+    target_density = .1
+) {
+    edge_filter <- match.arg(edge_filter, c("threshold", "top_k", "adaptive"))
+    if (length(min_edge) != 1L || !is.numeric(min_edge) ||
+        !is.finite(min_edge) || min_edge < 0 || min_edge > 1) {
+        stop('"min_edge" should be a finite number between 0 and 1.')
+    }
+    if (length(top_k) != 1L || !is.numeric(top_k) ||
+        !is.finite(top_k) || top_k < 1 || top_k != floor(top_k)) {
+        stop('"top_k" should be a positive integer.')
+    }
+    if (length(target_density) != 1L || !is.numeric(target_density) ||
+        !is.finite(target_density) || target_density < 0 ||
+        target_density > 1) {
+        stop('"target_density" should be a finite number between 0 and 1.')
+    }
+    if (!is.data.frame(edge_data) || ncol(edge_data) < 3) {
+        stop("`edge_data` must contain at least three columns.")
+    }
+
+    similarity <- as.numeric(edge_data[[3L]])
+    from <- as.character(edge_data[[1L]])
+    to <- as.character(edge_data[[2L]])
+    keep <- rep(FALSE, nrow(edge_data))
+    valid <- is.finite(similarity) & !is.na(from) & !is.na(to) & from != to
+    if (!any(valid)) {
+        return(keep)
+    }
+    if (edge_filter == "threshold") {
+        return(valid & similarity >= min_edge)
+    }
+
+    valid_idx <- which(valid)
+    left <- pmin(from[valid_idx], to[valid_idx])
+    right <- pmax(from[valid_idx], to[valid_idx])
+    pair_key <- paste(left, right, sep = "\\r")
+    pair_rows <- split(valid_idx, pair_key)
+    pair_names <- names(pair_rows)
+    pair_idx <- vapply(pair_rows, function(ii) {
+        ii[order(-similarity[ii], from[ii], to[ii], method = "radix")[1L]]
+    }, integer(1L))
+    pair_similarity <- similarity[pair_idx]
+    eligible <- pair_names[pair_similarity >= min_edge]
+    if (length(eligible) == 0L) {
+        return(keep)
+    }
+
+    if (edge_filter == "top_k") {
+        pair_left <- vapply(pair_rows, function(ii) from[ii[1L]], character(1L))
+        pair_right <- vapply(pair_rows, function(ii) to[ii[1L]], character(1L))
+        raw_left <- pair_left
+        raw_right <- pair_right
+        pair_left <- pmin(raw_left, raw_right)
+        pair_right <- pmax(raw_left, raw_right)
+        eligible_idx <- match(eligible, pair_names)
+        terms <- sort(unique(c(pair_left[eligible_idx], pair_right[eligible_idx])))
+        selected <- character()
+        for (term in terms) {
+            incident <- eligible_idx[
+                pair_left[eligible_idx] == term |
+                    pair_right[eligible_idx] == term
+            ]
+            ord <- order(-pair_similarity[incident], pair_names[incident],
+                         method = "radix")
+            selected <- c(
+                selected,
+                pair_names[incident[ord[seq_len(min(length(ord), top_k))]]]
+            )
+        }
+        keep[valid_idx] <- pair_key %in% unique(selected)
+        return(keep)
+    }
+
+    possible <- choose(length(unique(c(from[valid_idx], to[valid_idx]))), 2)
+    n_keep <- min(length(eligible), ceiling(target_density * possible))
+    if (n_keep < 1L) {
+        return(keep)
+    }
+    eligible_idx <- match(eligible, pair_names)
+    ord <- order(-pair_similarity[eligible_idx], pair_names[eligible_idx],
+                 method = "radix")
+    keep[valid_idx] <- pair_key %in% eligible[ord[seq_len(n_keep)]]
+    keep
+}
+
+#' Diagnose enrichment-map edge density
+#'
+#' @param pair_sim square numeric similarity matrix.
+#' @param min_edge minimum similarity threshold.
+#' @param edge_filter edge filtering strategy.
+#' @param top_k number of neighbors per term.
+#' @param target_density target adaptive density.
+#' @return A one-row data.frame with retained-pair counts and density.
+#' @export
+emapplot_edge_density <- function(
+    pair_sim,
+    min_edge = .2,
+    edge_filter = "threshold",
+    top_k = 5,
+    target_density = .1
+) {
+    if (!is.matrix(pair_sim) || nrow(pair_sim) != ncol(pair_sim) ||
+        !is.numeric(pair_sim)) {
+        stop("`pair_sim` must be a square numeric matrix.")
+    }
+    wd <- reshape2::melt(pair_sim)
+    keep <- filter_emap_edges(
+        wd, edge_filter = edge_filter, min_edge = min_edge,
+        top_k = top_k, target_density = target_density
+    )
+    keys <- vapply(which(keep), function(i) {
+        paste(sort(as.character(wd[i, 1:2])), collapse = "\\r")
+    }, character(1L))
+    possible <- choose(nrow(pair_sim), 2)
+    retained <- length(unique(keys))
+    data.frame(
+        n_terms = nrow(pair_sim),
+        possible_pairs = possible,
+        retained_pairs = retained,
+        edge_rows = sum(keep),
+        density = if (possible == 0) 0 else retained / possible,
+        edge_filter = match.arg(edge_filter, c("threshold", "top_k", "adaptive")),
+        min_edge = min_edge,
+        top_k = as.integer(top_k),
+        target_density = target_density,
+        suggestion = if (possible > 0 && retained / possible > .2) {
+            "Graph density is high; consider increasing `min_edge` or using `top_k`/`adaptive`."
+        } else {
+            "Graph density is within the requested display range."
+        },
+        stringsAsFactors = FALSE
+    )
+}
+
+
 #'
 #' @importFrom igraph graph.empty
 #' @importFrom igraph graph_from_data_frame
@@ -89,55 +237,88 @@ build_emap_graph <- function(
     cex_line,
     min_edge,
     pair_sim,
-    method
+    method,
+    edge_filter = "threshold",
+    top_k = 5,
+    target_density = .1
 ) {
-    if (!is.numeric(min_edge) || min_edge < 0 || min_edge > 1) {
-        stop('"min_edge" should be a number between 0 and 1.')
+    if (length(cex_line) != 1L || !is.numeric(cex_line) ||
+        !is.finite(cex_line) || cex_line < 0) {
+        stop('"size_edge" should be a finite non-negative number.')
     }
-
+    filter_emap_edges(
+        data.frame(character(), character(), numeric()),
+        edge_filter = edge_filter,
+        min_edge = min_edge,
+        top_k = top_k,
+        target_density = target_density
+    )
     if (is.null(dim(enrichDf)) || nrow(enrichDf) == 1) {
-        # when just one node
-        g <- graph.empty(0, directed = FALSE)
-        g <- add_vertices(g, nv = 1)
+        g <- igraph::make_empty_graph(n = 1, directed = FALSE)
         V(g)$name <- as.character(enrichDf$Description)
         V(g)$color <- "red"
+        g <- igraph::set_graph_attr(
+            g, "enrichplot_edge_diagnostic",
+            data.frame(
+                n_terms = 1L, possible_pairs = 0, retained_pairs = 0L,
+                edge_rows = 0L, density = 0, edge_filter = edge_filter,
+                min_edge = min_edge, top_k = as.integer(top_k),
+                target_density = target_density,
+                suggestion = "Fewer than two terms are available.",
+                stringsAsFactors = FALSE
+            )
+        )
         return(g)
-    } else {
-        w <- pair_sim[
-            as.character(enrichDf$Description),
-            as.character(enrichDf$Description)
-        ]
     }
 
+    w <- pair_sim[
+        as.character(enrichDf$Description),
+        as.character(enrichDf$Description),
+        drop = FALSE
+    ]
     wd <- reshape2::melt(w)
-    wd <- wd[wd[, 1] != wd[, 2], ]
-    # remove NA
-    wd <- wd[!is.na(wd[, 3]), ]
-    if (method != "JC") {
-        # map id to names
-        wd[, 1] <- enrichDf[wd[, 1], "Description"]
-        wd[, 2] <- enrichDf[wd[, 2], "Description"]
+    wd <- wd[wd[, 1] != wd[, 2], , drop = FALSE]
+    wd <- wd[!is.na(wd[, 3]), , drop = FALSE]
+    keep <- filter_emap_edges(
+        wd, edge_filter = edge_filter, min_edge = min_edge,
+        top_k = top_k, target_density = target_density
+    )
+    edge_df <- wd[keep, , drop = FALSE]
+    if (edge_filter != "threshold" && nrow(edge_df) > 0) {
+        key <- paste(
+            pmin(as.character(edge_df[, 1]), as.character(edge_df[, 2])),
+            pmax(as.character(edge_df[, 1]), as.character(edge_df[, 2])),
+            sep = "\\r"
+        )
+        edge_df <- edge_df[!duplicated(key), , drop = FALSE]
     }
 
-    g <- graph_from_data_frame(wd[, -3], directed = FALSE)
-    E(g)$width <- sqrt(wd[, 3] * 5) * cex_line
-    # Use similarity as the weight(length) of an edge
-    E(g)$weight <- wd[, 3]
-    g <- delete.edges(g, E(g)[wd[, 3] < min_edge])
-    idx <- unlist(sapply(V(g)$name, function(x) {
-        which(x == enrichDf$Description)
-    }))
-    cnt <- sapply(geneSets[idx], length)
-    V(g)$size <- cnt
-    if (color %in% names(enrichDf)) {
-        colVar <- enrichDf[idx, color]
+    vertex_df <- data.frame(
+        name = unique(as.character(enrichDf$Description)),
+        stringsAsFactors = FALSE
+    )
+    g <- igraph::graph_from_data_frame(
+        edge_df[, -3, drop = FALSE], directed = FALSE, vertices = vertex_df
+    )
+    if (igraph::ecount(g) > 0) {
+        E(g)$width <- sqrt(edge_df[, 3] * 5) * cex_line
+        E(g)$weight <- edge_df[, 3]
+    }
+    idx <- match(V(g)$name, as.character(enrichDf$Description))
+    V(g)$size <- lengths(geneSets[idx])
+    V(g)$color <- if (color %in% names(enrichDf)) {
+        enrichDf[idx, color]
     } else {
-        colVar <- color
+        color
     }
-
-    V(g)$color <- colVar
-    return(g)
+    diagnostic <- emapplot_edge_density(
+        w, min_edge = min_edge, edge_filter = edge_filter,
+        top_k = top_k, target_density = target_density
+    )
+    igraph::set_graph_attr(g, "enrichplot_edge_diagnostic", diagnostic)
 }
+
+
 
 
 #' Get an iGraph object
@@ -152,7 +333,10 @@ build_emap_graph <- function(
 #'
 #' @return an iGraph object
 #' @noRd
-get_igraph <- function(x, nCategory, color, cex_line, min_edge) {
+get_igraph <- function(
+    x, nCategory, color, cex_line, min_edge,
+    edge_filter = "threshold", top_k = 5, target_density = .1
+) {
     y <- as.data.frame(x)
     geneSets <- geneInCategory(x) ## use core gene for gsea result
     if (is.numeric(nCategory)) {
@@ -173,7 +357,10 @@ get_igraph <- function(x, nCategory, color, cex_line, min_edge) {
         cex_line = cex_line,
         min_edge = min_edge,
         pair_sim = x@termsim,
-        method = x@method
+        method = x@method,
+        edge_filter = edge_filter,
+        top_k = top_k,
+        target_density = target_density
     )
 }
 

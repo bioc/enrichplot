@@ -3,8 +3,14 @@
 setMethod(
     "ssplot",
     signature(x = "enrichResult"),
-    function(x, showCategory = 30, ...) {
-        ssplot.enrichResult(x, showCategory = showCategory, ...)
+    function(x, showCategory = 30, ..., min_edge = .2, size_edge = .5) {
+        ssplot.enrichResult(
+            x,
+            showCategory = showCategory,
+            min_edge = min_edge,
+            size_edge = size_edge,
+            ...
+        )
     }
 )
 
@@ -13,8 +19,14 @@ setMethod(
 setMethod(
     "ssplot",
     signature(x = "gseaResult"),
-    function(x, showCategory = 30, ...) {
-        ssplot.enrichResult(x, showCategory = showCategory, ...)
+    function(x, showCategory = 30, ..., min_edge = .2, size_edge = .5) {
+        ssplot.enrichResult(
+            x,
+            showCategory = showCategory,
+            min_edge = min_edge,
+            size_edge = size_edge,
+            ...
+        )
     }
 )
 
@@ -23,16 +35,26 @@ setMethod(
 setMethod(
     "ssplot",
     signature(x = "compareClusterResult"),
-    function(x, showCategory = 30, ...) {
-        ssplot.compareClusterResult(x, showCategory = showCategory, ...)
+    function(x, showCategory = 30, ..., min_edge = .2, size_edge = .5) {
+        ssplot.compareClusterResult(
+            x,
+            showCategory = showCategory,
+            min_edge = min_edge,
+            size_edge = size_edge,
+            ...
+        )
     }
 )
 
 
 #' @rdname ssplot
-#' @param drfun The function used for dimension reduction,
-#' e.g. `stats::cmdscale` (the default), `vegan::metaMDS`, or `ape::pcoa`.
-#' @param dr.params list, the parameters of `tidydr::dr`.
+#' @param drfun Function used for dimension reduction. The default,
+#' `stats::cmdscale`, performs classical multidimensional scaling (MDS); this
+#' is one available reduction method.
+#' @param dr.params Named list of arguments passed separately to `drfun` via
+#' `tidydr::dr`.
+#' @param min_edge Minimum similarity threshold for connecting two nodes.
+#' @param size_edge Relative size of edge width.
 #' @inheritParams emapplot
 #' @param ... additional parameters
 #'
@@ -45,6 +67,8 @@ ssplot.enrichResult <- function(
     dr.params = list(),
     #group = TRUE,
     node_label = "group",
+    min_edge = .2,
+    size_edge = .5,
     ...
 ) {
     if (is.null(drfun)) {
@@ -67,8 +91,10 @@ ssplot.enrichResult <- function(
     p <- emapplot(
         x = x,
         showCategory = showCategory,
-        #group = group,
+        coords = coords,
         node_label = node_label,
+        min_edge = min_edge,
+        size_edge = size_edge,
         ...
     )
 
@@ -93,6 +119,8 @@ ssplot.compareClusterResult <- function(
     #cex_pie2axis = 0.0125,
     dr.params = list(),
     node_label = "group",
+    min_edge = .2,
+    size_edge = .5,
     ...
 ) {
     if (is.null(drfun)) {
@@ -125,6 +153,8 @@ ssplot.compareClusterResult <- function(
         #cex_pie2axis = cex_pie2axis,
         #group = group,
         node_label = node_label,
+        min_edge = min_edge,
+        size_edge = size_edge,
         ...
     )
     ## Set axis label according to the method parameter
@@ -148,6 +178,7 @@ build_dist <- function(x, showCategory, split = NULL, pie = NULL) {
         split = split,
         pie = pie
     )
+    sim_labels <- rownames(sim)
 
     # ensure symmetry
     if (!isSymmetric(sim)) {
@@ -157,6 +188,9 @@ build_dist <- function(x, showCategory, split = NULL, pie = NULL) {
     # clamp to [0,1]
     sim[is.na(sim)] <- 0
     sim <- pmin(pmax(sim, 0), 1)
+    if (!is.null(sim_labels) && length(sim_labels) == nrow(sim)) {
+        dimnames(sim) <- list(sim_labels, sim_labels)
+    }
 
     # avoid exact 1 for off-diagonal entries (some DR methods may fail)
     eps <- .Machine$double.eps
@@ -164,7 +198,9 @@ build_dist <- function(x, showCategory, split = NULL, pie = NULL) {
     offdiag_idx <- row(sim) != col(sim)
     sim[offdiag_idx & sim >= 1] <- 1 - eps
 
-    stats::as.dist(1 - sim)
+    distance <- stats::as.dist(1 - sim)
+    attr(distance, "Labels") <- rownames(sim)
+    distance
 }
 
 
@@ -275,7 +311,34 @@ get_drResult <- function(
     )
     
     check_installed('tidydr', 'for `get_drResult()`')
-    
+
+    labels <- attr(distance_mat, "Labels")
+    if (is.null(labels)) {
+        labels <- rownames(as.matrix(distance_mat))
+    }
+    n_terms <- attr(distance_mat, "Size")
+    if (is.null(n_terms)) {
+        n_terms <- length(labels)
+    }
+    if (n_terms == 1) {
+        drdata <- data.frame(Dimension1 = 0, Dimension2 = 0, row.names = labels)
+        return(list(
+            drdata = drdata,
+            data = structure(data.frame(), Labels = labels),
+            eigenvalue = c(1, 0)
+        ))
+    }
+    if (n_terms == 2) {
+        drdata <- data.frame(
+            Dimension1 = c(-.5, .5), Dimension2 = c(0, 0), row.names = labels
+        )
+        return(list(
+            drdata = drdata,
+            data = structure(data.frame(), Labels = labels),
+            eigenvalue = c(1, 0)
+        ))
+    }
+
     ## Optimized error handling
     drResult <- tryCatch({
         do.call(tidydr::dr, c(list(data = distance_mat, fun = drfun), dr.params))
