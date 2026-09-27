@@ -12,13 +12,53 @@
 \usage{
 ssplot(x, ...)
 
-\S4method{ssplot}{enrichResult}(x, showCategory = 30, ...)
+\S4method{ssplot}{enrichResult}(
+  x,
+  showCategory = 30,
+  ...,
+  min_edge = 0.2,
+  size_edge = 0.5,
+  edge_filter = "threshold",
+  top_k = 5,
+  target_density = 0.1,
+  edge_diagnostic = FALSE
+)
 
-\S4method{ssplot}{gseaResult}(x, showCategory = 30, ...)
+\S4method{ssplot}{gseaResult}(
+  x,
+  showCategory = 30,
+  ...,
+  min_edge = 0.2,
+  size_edge = 0.5,
+  edge_filter = "threshold",
+  top_k = 5,
+  target_density = 0.1,
+  edge_diagnostic = FALSE
+)
 
-\S4method{ssplot}{mnseaResult}(x, showCategory = 30, ...)
+\S4method{ssplot}{mnseaResult}(
+  x,
+  showCategory = 30,
+  ...,
+  min_edge = 0.2,
+  size_edge = 0.5,
+  edge_filter = "threshold",
+  top_k = 5,
+  target_density = 0.1,
+  edge_diagnostic = FALSE
+)
 
-\S4method{ssplot}{compareClusterResult}(x, showCategory = 30, ...)
+\S4method{ssplot}{compareClusterResult}(
+  x,
+  showCategory = 30,
+  ...,
+  min_edge = 0.2,
+  size_edge = 0.5,
+  edge_filter = "threshold",
+  top_k = 5,
+  target_density = 0.1,
+  edge_diagnostic = FALSE
+)
 
 ssplot.enrichResult(
   x,
@@ -26,6 +66,12 @@ ssplot.enrichResult(
   drfun = NULL,
   dr.params = list(),
   node_label = "group",
+  min_edge = 0.2,
+  size_edge = 0.5,
+  edge_filter = "threshold",
+  top_k = 5,
+  target_density = 0.1,
+  edge_diagnostic = FALSE,
   ...
 )
 
@@ -36,6 +82,12 @@ ssplot.compareClusterResult(
   drfun = NULL,
   dr.params = list(),
   node_label = "group",
+  min_edge = 0.2,
+  size_edge = 0.5,
+  edge_filter = "threshold",
+  top_k = 5,
+  target_density = 0.1,
+  edge_diagnostic = FALSE,
   ...
 )
 }
@@ -48,10 +100,31 @@ Additional plotting parameters are inherited from \code{\link[=emapplot]{emapplo
 
 \item{showCategory}{number of categories to display or a vector of terms.}
 
-\item{drfun}{The function used for dimension reduction,
-e.g. \code{stats::cmdscale} (the default), \code{vegan::metaMDS}, or \code{ape::pcoa}.}
+\item{min_edge}{The minimum similarity threshold for connecting two nodes;
+should be between 0 and 1. Passed to \code{\link[=emapplot]{emapplot()}}.}
 
-\item{dr.params}{list, the parameters of \code{tidydr::dr}.}
+\item{size_edge}{Relative size of the edge width. Passed to \code{\link[=emapplot]{emapplot()}}.}
+
+\item{edge_filter}{Edge filtering strategy: \code{"threshold"} (default),
+\code{"top_k"}, or \code{"adaptive"}. Edge filtering affects display only and
+does not change the dimension-reduction input.}
+
+\item{top_k}{Number of strongest neighbors retained per term when
+\code{edge_filter = "top_k"}.}
+
+\item{target_density}{Target proportion of unique term pairs when
+\code{edge_filter = "adaptive"}.}
+
+\item{edge_diagnostic}{Logical; if \code{TRUE}, attach a one-row edge-density
+diagnostic data frame to the returned plot.}
+
+\item{drfun}{Function used for dimension reduction. The default,
+\code{stats::cmdscale}, performs classical multidimensional scaling (MDS); this
+is one available reduction method. Supply another function here when
+needed.}
+
+\item{dr.params}{A named list of arguments passed separately to \code{drfun} via
+\code{tidydr::dr}.}
 
 \item{node_label}{Select which labels to display,
 one of 'category', 'group', 'all' and 'none'.}
@@ -88,6 +161,9 @@ techniques to show relationships between terms based on similarity.
     d <- godata('org.Hs.eg.db', ont="BP")
     ego2 <- pairwise_termsim(ego, method = "Wang", semData = d)
     ssplot(ego2)
+    # Edge controls are forwarded to emapplot; increase min_edge for a
+    # less dense display when showing many terms.
+    ssplot(ego2, showCategory = 50, min_edge = 0.4, size_edge = 0.5)
 }
 }
 \author{

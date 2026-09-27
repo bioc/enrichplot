@@ -3,8 +3,20 @@
 setMethod(
     "ssplot",
     signature(x = "enrichResult"),
-    function(x, showCategory = 30, ...) {
-        ssplot.enrichResult(x, showCategory = showCategory, ...)
+    function(x, showCategory = 30, ..., min_edge = .2, size_edge = .5,
+             edge_filter = "threshold", top_k = 5,
+             target_density = .1, edge_diagnostic = FALSE) {
+        ssplot.enrichResult(
+            x,
+            showCategory = showCategory,
+            min_edge = min_edge,
+            size_edge = size_edge,
+            edge_filter = edge_filter,
+            top_k = top_k,
+            target_density = target_density,
+            edge_diagnostic = edge_diagnostic,
+            ...
+        )
     }
 )
 
@@ -13,8 +25,20 @@ setMethod(
 setMethod(
     "ssplot",
     signature(x = "gseaResult"),
-    function(x, showCategory = 30, ...) {
-        ssplot.enrichResult(x, showCategory = showCategory, ...)
+    function(x, showCategory = 30, ..., min_edge = .2, size_edge = .5,
+             edge_filter = "threshold", top_k = 5,
+             target_density = .1, edge_diagnostic = FALSE) {
+        ssplot.enrichResult(
+            x,
+            showCategory = showCategory,
+            min_edge = min_edge,
+            size_edge = size_edge,
+            edge_filter = edge_filter,
+            top_k = top_k,
+            target_density = target_density,
+            edge_diagnostic = edge_diagnostic,
+            ...
+        )
     }
 )
 
@@ -23,8 +47,20 @@ setMethod(
 setMethod(
     "ssplot",
     signature(x = "mnseaResult"),
-    function(x, showCategory = 30, ...) {
-        ssplot.mnseaResult(x, showCategory = showCategory, ...)
+    function(x, showCategory = 30, ..., min_edge = .2, size_edge = .5,
+             edge_filter = "threshold", top_k = 5,
+             target_density = .1, edge_diagnostic = FALSE) {
+        ssplot.mnseaResult(
+            x,
+            showCategory = showCategory,
+            min_edge = min_edge,
+            size_edge = size_edge,
+            edge_filter = edge_filter,
+            top_k = top_k,
+            target_density = target_density,
+            edge_diagnostic = edge_diagnostic,
+            ...
+        )
     }
 )
 
@@ -33,16 +69,43 @@ setMethod(
 setMethod(
     "ssplot",
     signature(x = "compareClusterResult"),
-    function(x, showCategory = 30, ...) {
-        ssplot.compareClusterResult(x, showCategory = showCategory, ...)
+    function(x, showCategory = 30, ..., min_edge = .2, size_edge = .5,
+             edge_filter = "threshold", top_k = 5,
+             target_density = .1, edge_diagnostic = FALSE) {
+        ssplot.compareClusterResult(
+            x,
+            showCategory = showCategory,
+            min_edge = min_edge,
+            size_edge = size_edge,
+            edge_filter = edge_filter,
+            top_k = top_k,
+            target_density = target_density,
+            edge_diagnostic = edge_diagnostic,
+            ...
+        )
     }
 )
 
 
 #' @rdname ssplot
-#' @param drfun The function used for dimension reduction,
-#' e.g. `stats::cmdscale` (the default), `vegan::metaMDS`, or `ape::pcoa`.
-#' @param dr.params list, the parameters of `tidydr::dr`.
+#' @param drfun Function used for dimension reduction. The default,
+#' `stats::cmdscale`, performs classical multidimensional scaling (MDS); this
+#' is one available reduction method. Supply another function here when
+#' needed.
+#' @param dr.params A named list of arguments passed separately to `drfun` via
+#' `tidydr::dr`.
+#' @param min_edge The minimum similarity threshold for connecting two nodes;
+#' should be between 0 and 1. Passed to [emapplot()].
+#' @param size_edge Relative size of the edge width. Passed to [emapplot()].
+#' @param edge_filter Edge filtering strategy: `"threshold"` (default),
+#'   `"top_k"`, or `"adaptive"`. Edge filtering affects display only and
+#'   does not change the dimension-reduction input.
+#' @param top_k Number of strongest neighbors retained per term when
+#'   `edge_filter = "top_k"`.
+#' @param target_density Target proportion of unique term pairs when
+#'   `edge_filter = "adaptive"`.
+#' @param edge_diagnostic Logical; if `TRUE`, attach a one-row edge-density
+#'   diagnostic data frame to the returned plot.
 #' @inheritParams emapplot
 #' @param ... additional parameters
 #'
@@ -55,6 +118,12 @@ ssplot.enrichResult <- function(
     dr.params = list(),
     #group = TRUE,
     node_label = "group",
+    min_edge = .2,
+    size_edge = .5,
+    edge_filter = "threshold",
+    top_k = 5,
+    target_density = .1,
+    edge_diagnostic = FALSE,
     ...
 ) {
     if (is.null(drfun)) {
@@ -80,13 +149,24 @@ ssplot.enrichResult <- function(
         coords = coords,
         #group = group,
         node_label = node_label,
+        min_edge = min_edge,
+        size_edge = size_edge,
+        edge_filter = edge_filter,
+        top_k = top_k,
+        target_density = target_density,
+        edge_diagnostic = edge_diagnostic,
         ...
     )
 
     ## Set axis label according to drfun
     p <- adj_axis(p = p, drResult = drResult)
 
-    p + theme_dr()
+    diagnostic <- attr(p, "enrichplot_edge_diagnostic", exact = TRUE)
+    p <- p + theme_dr()
+    if (isTRUE(edge_diagnostic) && !is.null(diagnostic)) {
+        attr(p, "enrichplot_edge_diagnostic") <- diagnostic
+    }
+    p
 }
 
 ssplot.mnseaResult <- function(
@@ -96,6 +176,12 @@ ssplot.mnseaResult <- function(
     drfun = NULL,
     dr.params = list(),
     node_label = "group",
+    min_edge = .2,
+    size_edge = .5,
+    edge_filter = "threshold",
+    top_k = 5,
+    target_density = .1,
+    edge_diagnostic = FALSE,
     ...
 ) {
     if (is.null(drfun)) {
@@ -122,12 +208,23 @@ ssplot.mnseaResult <- function(
         coords = coords,
         layer = layer,
         node_label = node_label,
+        min_edge = min_edge,
+        size_edge = size_edge,
+        edge_filter = edge_filter,
+        top_k = top_k,
+        target_density = target_density,
+        edge_diagnostic = edge_diagnostic,
         ...
     )
 
     p <- adj_axis(p = p, drResult = drResult)
 
-    p + theme_dr()
+    diagnostic <- attr(p, "enrichplot_edge_diagnostic", exact = TRUE)
+    p <- p + theme_dr()
+    if (isTRUE(edge_diagnostic) && !is.null(diagnostic)) {
+        attr(p, "enrichplot_edge_diagnostic") <- diagnostic
+    }
+    p
 }
 
 
@@ -145,6 +242,12 @@ ssplot.compareClusterResult <- function(
     #cex_pie2axis = 0.0125,
     dr.params = list(),
     node_label = "group",
+    min_edge = .2,
+    size_edge = .5,
+    edge_filter = "threshold",
+    top_k = 5,
+    target_density = .1,
+    edge_diagnostic = FALSE,
     ...
 ) {
     if (is.null(drfun)) {
@@ -177,12 +280,23 @@ ssplot.compareClusterResult <- function(
         #cex_pie2axis = cex_pie2axis,
         #group = group,
         node_label = node_label,
+        min_edge = min_edge,
+        size_edge = size_edge,
+        edge_filter = edge_filter,
+        top_k = top_k,
+        target_density = target_density,
+        edge_diagnostic = edge_diagnostic,
         ...
     )
     ## Set axis label according to the method parameter
     p <- adj_axis(p = p, drResult = drResult)
 
-    p + theme_dr()
+    diagnostic <- attr(p, "enrichplot_edge_diagnostic", exact = TRUE)
+    p <- p + theme_dr()
+    if (isTRUE(edge_diagnostic) && !is.null(diagnostic)) {
+        attr(p, "enrichplot_edge_diagnostic") <- diagnostic
+    }
+    p
 }
 
 
@@ -200,6 +314,7 @@ build_dist <- function(x, showCategory, split = NULL, pie = NULL) {
         split = split,
         pie = pie
     )
+    sim_labels <- rownames(sim)
 
     # ensure symmetry
     if (!isSymmetric(sim)) {
@@ -209,6 +324,9 @@ build_dist <- function(x, showCategory, split = NULL, pie = NULL) {
     # clamp to [0,1]
     sim[is.na(sim)] <- 0
     sim <- pmin(pmax(sim, 0), 1)
+    if (!is.null(sim_labels) && length(sim_labels) == nrow(sim)) {
+        dimnames(sim) <- list(sim_labels, sim_labels)
+    }
 
     # avoid exact 1 for off-diagonal entries (some DR methods may fail)
     eps <- .Machine$double.eps
@@ -216,7 +334,9 @@ build_dist <- function(x, showCategory, split = NULL, pie = NULL) {
     offdiag_idx <- row(sim) != col(sim)
     sim[offdiag_idx & sim >= 1] <- 1 - eps
 
-    stats::as.dist(1 - sim)
+    distance <- stats::as.dist(1 - sim)
+    attr(distance, "Labels") <- rownames(sim)
+    distance
 }
 
 
@@ -242,13 +362,11 @@ get_pairwise_sim <- function(x, showCategory, split = NULL, pie = NULL) {
         pie_data <- prepare_pie_category(y, pie = pie)
         keep <- rownames(pie_data)
     } else {
-        n <- update_n(x, showCategory)
-        if (is.numeric(n)) {
-            keep <- seq_len(min(n, nrow(x@result)))
-        } else {
-            keep <- match(n, rownames(x@termsim))
-            keep <- keep[!is.na(keep)]
-        }
+        selected <- select_terms(x, showCategory)
+        labels <- unname(selected$labels)
+        termsim_labels <- rownames(x@termsim)
+        keep <- labels[labels %in% termsim_labels]
+        keep <- unique(keep)
     }
     
     if (length(keep) == 0) {
@@ -328,6 +446,41 @@ get_drResult <- function(
     
     require_suggested('tidydr', 'for `get_drResult()`')
     
+    labels <- attr(distance_mat, "Labels")
+    if (is.null(labels)) {
+        labels <- rownames(as.matrix(distance_mat))
+    }
+    n_terms <- attr(distance_mat, "Size")
+    if (is.null(n_terms)) {
+        n_terms <- length(labels)
+    }
+    if (n_terms == 1) {
+        drdata <- data.frame(
+            Dimension1 = 0,
+            Dimension2 = 0,
+            row.names = labels
+        )
+        return(list(
+            drdata = drdata,
+            data = structure(data.frame(), Labels = labels),
+            eigenvalue = c(1, 0)
+        ))
+    }
+    if (n_terms == 2) {
+        drdata <- data.frame(
+            Dimension1 = c(-0.5, 0.5),
+            Dimension2 = c(0, 0),
+            row.names = labels
+        )
+        return(list(
+            drdata = drdata,
+            data = structure(data.frame(), Labels = labels),
+            eigenvalue = c(1, 0)
+        ))
+    }
+
+    ## Dimension reduction is deliberately based on the full similarity
+    ## matrix; edge filtering is applied later by emapplot() for display only.
     ## Optimized error handling
     drResult <- tryCatch({
         do.call(tidydr::dr, c(list(data = distance_mat, fun = drfun), dr.params))

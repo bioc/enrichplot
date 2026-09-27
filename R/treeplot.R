@@ -685,9 +685,10 @@ fill_termsim <- function(x, keep) {
     ## Subsetting an unpopulated termsim used to fail with the cryptic
     ## "no 'dimnames' attribute for array"; say what is actually missing instead.
     has_pairsim(x)
-    termsim <- x@termsim[keep, keep]
+    termsim <- x@termsim[keep, keep, drop = FALSE]
     termsim[which(is.na(termsim))] <- 0
     termsim2 <- termsim + t(termsim)
+    dimnames(termsim2) <- dimnames(termsim)
     diag(termsim2) <- 1
     return(termsim2)
 }

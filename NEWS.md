@@ -1,3 +1,9 @@
+# enrichplot 1.99.7
+
++ add opt-in `threshold`, `top_k` and `adaptive` edge filters to `emapplot()` and `ssplot()`; `top_k` keeps strongest per-term neighbors, while `adaptive` targets a configurable graph density without changing the similarity matrix or dimension-reduction input (2026-09-27, Sun)
++ expose `min_edge` and `size_edge` directly in `ssplot()`, document classical MDS as one available reduction choice, and add an optional `enrichplot_edge_diagnostic` attribute plus `emapplot_edge_density()` helper for retained-pair density diagnostics (2026-09-27, Sun)
++ harden similarity-space selection for term IDs, preserve labels through one- and two-term reductions, and validate edge/coordinate controls before plotting (2026-09-27, Sun)
+
 # enrichplot 1.99.6
 
 + fix `hplot()` visual semantics by replacing the inaccurate ribbon/rug approximation with a pure `ggplot2` horizon-band implementation: four `BluGrn` score bands, minimum-origin scaling, stacked facet geometry and right-side term labels now match the historical `ggHoriPlot::geom_horizon(origin = "min", horizonscale = 4)` output without requiring `ggHoriPlot` (2026-09-24, Thu)

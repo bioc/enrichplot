@@ -135,6 +135,11 @@ setGeneric(
         clusterFunction = stats::kmeans,
         nWords = 4,
         nCluster = NULL,
+        show_category_size_legend = TRUE,
+        edge_filter = "threshold",
+        top_k = 5,
+        target_density = .1,
+        edge_diagnostic = FALSE,
         ...
     ) {
         standardGeneric("emapplot")
@@ -478,6 +483,21 @@ setGeneric("treeplot", function(x, ...) {
 #' @title ssplot
 #' @rdname ssplot
 #' @inheritParams emapplot
+#' @param drfun Function used for dimension reduction. The default,
+#'   `stats::cmdscale`, performs classical multidimensional scaling (MDS); this
+#'   is one available reduction method. Supply another function here when
+#'   needed.
+#' @param dr.params A named list of arguments passed separately to `drfun` via
+#'   `tidydr::dr`.
+#' @param min_edge The minimum similarity threshold for connecting two nodes;
+#'   should be between 0 and 1. Passed to [emapplot()].
+#' @param size_edge Relative size of the edge width. Passed to [emapplot()].
+#' @param edge_filter Edge filtering strategy: `"threshold"` (default),
+#'   `"top_k"`, or `"adaptive"`. Edge filtering affects display only.
+#' @param top_k Number of strongest neighbors retained per term in top-k mode.
+#' @param target_density Target proportion of unique term pairs in adaptive mode.
+#' @param edge_diagnostic Logical; if `TRUE`, attach an edge-density
+#'   diagnostic data frame to the returned plot.
 #' @return ggplot object
 #' @export
 #' @examples
@@ -500,6 +520,9 @@ setGeneric("treeplot", function(x, ...) {
 #'     d <- godata('org.Hs.eg.db', ont="BP")
 #'     ego2 <- pairwise_termsim(ego, method = "Wang", semData = d)
 #'     ssplot(ego2)
+#'     # Edge controls are forwarded to emapplot; increase min_edge for a
+#'     # less dense display when showing many terms.
+#'     ssplot(ego2, showCategory = 50, min_edge = 0.4, size_edge = 0.5)
 #' }
 #' @author Guangchuang Yu
 setGeneric("ssplot", function(x, ...) {

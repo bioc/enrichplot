@@ -24,6 +24,10 @@ setMethod(
         nWords = 4,
         nCluster = NULL,
         show_category_size_legend = TRUE,
+        edge_filter = "threshold",
+        top_k = 5,
+        target_density = .1,
+        edge_diagnostic = FALSE,
         ...
     ) {
         emapplot_internal(
@@ -34,6 +38,10 @@ setMethod(
             color = color,
             size_category = size_category,
             min_edge = min_edge,
+            edge_filter = edge_filter,
+            top_k = top_k,
+            target_density = target_density,
+            edge_diagnostic = edge_diagnostic,
             color_edge = color_edge,
             size_edge = size_edge,
             group = group,
@@ -78,6 +86,10 @@ setMethod(
         nWords = 4,
         nCluster = NULL,
         show_category_size_legend = TRUE,
+        edge_filter = "threshold",
+        top_k = 5,
+        target_density = .1,
+        edge_diagnostic = FALSE,
         ...
     ) {
         emapplot_internal(
@@ -88,6 +100,10 @@ setMethod(
             color = color,
             size_category = size_category,
             min_edge = min_edge,
+            edge_filter = edge_filter,
+            top_k = top_k,
+            target_density = target_density,
+            edge_diagnostic = edge_diagnostic,
             color_edge = color_edge,
             size_edge = size_edge,
             group = group,
@@ -132,6 +148,10 @@ setMethod(
         nWords = 4,
         nCluster = NULL,
         show_category_size_legend = TRUE,
+        edge_filter = "threshold",
+        top_k = 5,
+        target_density = .1,
+        edge_diagnostic = FALSE,
         ...
     ) {
         emapplot_internal(
@@ -142,6 +162,10 @@ setMethod(
             color = color,
             size_category = size_category,
             min_edge = min_edge,
+            edge_filter = edge_filter,
+            top_k = top_k,
+            target_density = target_density,
+            edge_diagnostic = edge_diagnostic,
             color_edge = color_edge,
             size_edge = size_edge,
             group = group,
@@ -186,6 +210,10 @@ setMethod(
         nWords = 4,
         nCluster = NULL,
         show_category_size_legend = TRUE,
+        edge_filter = "threshold",
+        top_k = 5,
+        target_density = .1,
+        edge_diagnostic = FALSE,
         ...
     ) {
         emapplot_internal(
@@ -196,6 +224,10 @@ setMethod(
             color = color,
             size_category = size_category,
             min_edge = min_edge,
+            edge_filter = edge_filter,
+            top_k = top_k,
+            target_density = target_density,
+            edge_diagnostic = edge_diagnostic,
             color_edge = color_edge,
             size_edge = size_edge,
             group = group,
@@ -224,6 +256,14 @@ setMethod(
 #' @param size_category relative size of the categories
 #' @param min_edge The minimum similarity threshold for whether
 #' two nodes are connected, should be between 0 and 1, default value is 0.2.
+#' @param edge_filter Edge filtering strategy: `"threshold"` (default),
+#' `"top_k"`, or `"adaptive"`.
+#' @param top_k Number of strongest neighbors per term for `"top_k"`.
+#' @param target_density Target proportion of unique term pairs for
+#' `"adaptive"` filtering.
+#' @param edge_diagnostic Logical; if `TRUE`, attach a one-row
+#'   `enrichplot_edge_diagnostic` data frame to the returned plot. The
+#'   diagnostic reports retained pairs, rendered edge rows and graph density.
 #' @param color_edge color of the network edge
 #' @param size_edge relative size of edge width
 #' @param node_label Select which labels to display,
@@ -246,7 +286,9 @@ setMethod(
 #' @importFrom ggrepel geom_text_repel
 #' @importFrom ggrepel geom_label_repel
 #' @author Guangchuang Yu
-prepare_emapplot_data <- function(x, showCategory, color, min_edge, size_edge) {
+prepare_emapplot_data <- function(x, showCategory, color, min_edge, size_edge,
+                                   edge_filter = "threshold", top_k = 5,
+                                   target_density = .1) {
     ## this path feeds x@termsim straight into the graph builder, so an
     ## unpopulated matrix used to crash with "no 'dimnames' attribute for array"
     has_pairsim(x)
@@ -257,7 +299,10 @@ prepare_emapplot_data <- function(x, showCategory, color, min_edge, size_edge) {
         color = color,
         cex_line = size_edge,
         min_edge = min_edge,
-        pair_sim = x@termsim
+        pair_sim = x@termsim,
+        edge_filter = edge_filter,
+        top_k = top_k,
+        target_density = target_density
     )
     plot_result <- selected$result
     plot_result$Description <- unname(selected$labels)
@@ -368,7 +413,11 @@ prepare_mnsea_similarity_data <- function(x, showCategory, layer = NULL) {
     )
 }
 
-prepare_emapplot_mnsea_data <- function(x, showCategory, color, min_edge, size_edge, layer = NULL) {
+prepare_emapplot_mnsea_data <- function(
+    x, showCategory, color, min_edge, size_edge,
+    layer = NULL, edge_filter = "threshold", top_k = 5,
+    target_density = .1
+) {
     plot_data <- prepare_mnsea_similarity_data(
         x,
         showCategory = showCategory,
@@ -381,7 +430,10 @@ prepare_emapplot_mnsea_data <- function(x, showCategory, color, min_edge, size_e
         color = color,
         cex_line = size_edge,
         min_edge = min_edge,
-        pair_sim = plot_data$pair_sim
+        pair_sim = plot_data$pair_sim,
+        edge_filter = edge_filter,
+        top_k = top_k,
+        target_density = target_density
     )
 
     list(
@@ -399,6 +451,9 @@ emapplot_internal <- function(
     color = "p.adjust",
     size_category = 1,
     min_edge = .2,
+    edge_filter = "threshold",
+    top_k = 5,
+    target_density = .1,
     color_edge = "grey",
     size_edge = .5,
     group = NULL,
@@ -411,15 +466,23 @@ emapplot_internal <- function(
     clusterFunction = stats::kmeans,
     nWords = 4,
     nCluster = NULL,
-    show_category_size_legend = TRUE
+    show_category_size_legend = TRUE,
+    edge_diagnostic = FALSE
 ) {
+    if (length(edge_diagnostic) != 1L || is.na(edge_diagnostic) ||
+        !is.logical(edge_diagnostic)) {
+        stop('"edge_diagnostic" should be a single logical value.')
+    }
     if (inherits(x, 'compareClusterResult')) {
         gg <- graph_from_compareClusterResult(
             x,
             showCategory = showCategory,
             color = color,
             min_edge = min_edge,
-            size_edge = size_edge
+            size_edge = size_edge,
+            edge_filter = edge_filter,
+            top_k = top_k,
+            target_density = target_density
         )
     } else if (inherits(x, 'mnseaResult')) {
         gg <- prepare_emapplot_mnsea_data(
@@ -428,10 +491,18 @@ emapplot_internal <- function(
             color = color,
             min_edge = min_edge,
             size_edge = size_edge,
+            edge_filter = edge_filter,
+            top_k = top_k,
+            target_density = target_density,
             layer = layer
         )
     } else {
-        gg <- prepare_emapplot_data(x, showCategory, color, min_edge, size_edge)
+        gg <- prepare_emapplot_data(
+            x, showCategory, color, min_edge, size_edge,
+            edge_filter = edge_filter,
+            top_k = top_k,
+            target_density = target_density
+        )
     }
 
     g <- gg$graph
@@ -445,8 +516,21 @@ emapplot_internal <- function(
             yulab.utils::yulab_abort("`coords` must contain `x` and `y` columns.")
         }
         coords <- coords[, c("x", "y"), drop = FALSE]
-        if (is.null(rownames(coords))) {
-            yulab.utils::yulab_abort("`coords` must use node labels as row names.")
+        if (is.null(rownames(coords)) || anyDuplicated(rownames(coords))) {
+            yulab.utils::yulab_abort(
+                "`coords` must use unique node labels as row names."
+            )
+        }
+        if (!all(vapply(coords, is.numeric, logical(1))) ||
+            any(!is.finite(as.matrix(coords)))) {
+            yulab.utils::yulab_abort(
+                "`coords` must contain finite numeric `x` and `y` values."
+            )
+        }
+        if (!all(igraph::V(g)$name %in% rownames(coords))) {
+            yulab.utils::yulab_abort(
+                "`coords` row names must include every displayed node label."
+            )
         }
         layout_coords <- coords
         layout <- function(graph) {
@@ -584,12 +668,18 @@ emapplot_internal <- function(
             )
     }
 
-    p +
+    p <- p +
         coord_equal() +
         guides(
             size = guide_legend(order = 1),
             color = guide_colorbar(order = 2)
         )
+    if (isTRUE(edge_diagnostic)) {
+        attr(p, "enrichplot_edge_diagnostic") <- igraph::graph_attr(
+            g, "enrichplot_edge_diagnostic"
+        )
+    }
+    p
 }
 
 graph_from_compareClusterResult <- function(
@@ -597,7 +687,10 @@ graph_from_compareClusterResult <- function(
     showCategory = 30,
     color = "p.adjust",
     min_edge = .2,
-    size_edge = .5
+    size_edge = .5,
+    edge_filter = "threshold",
+    top_k = 5,
+    target_density = .1
 ) {
     ## x@termsim goes straight into the graph builder below, so an unpopulated
     ## matrix used to crash with "no 'dimnames' attribute for array"
@@ -619,7 +712,10 @@ graph_from_compareClusterResult <- function(
         color = color,
         cex_line = size_edge,
         min_edge = min_edge,
-        pair_sim = x@termsim
+        pair_sim = x@termsim,
+        edge_filter = edge_filter,
+        top_k = top_k,
+        target_density = target_density
     )
     return(list(graph = g, geneSet = gs, data = d))
 }

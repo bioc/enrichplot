@@ -29,6 +29,11 @@ emapplot(
   clusterFunction = stats::kmeans,
   nWords = 4,
   nCluster = NULL,
+  show_category_size_legend = TRUE,
+  edge_filter = "threshold",
+  top_k = 5,
+  target_density = 0.1,
+  edge_diagnostic = FALSE,
   ...
 )
 
@@ -53,6 +58,10 @@ emapplot(
   nWords = 4,
   nCluster = NULL,
   show_category_size_legend = TRUE,
+  edge_filter = "threshold",
+  top_k = 5,
+  target_density = 0.1,
+  edge_diagnostic = FALSE,
   ...
 )
 
@@ -77,6 +86,10 @@ emapplot(
   nWords = 4,
   nCluster = NULL,
   show_category_size_legend = TRUE,
+  edge_filter = "threshold",
+  top_k = 5,
+  target_density = 0.1,
+  edge_diagnostic = FALSE,
   ...
 )
 
@@ -101,6 +114,10 @@ emapplot(
   nWords = 4,
   nCluster = NULL,
   show_category_size_legend = TRUE,
+  edge_filter = "threshold",
+  top_k = 5,
+  target_density = 0.1,
+  edge_diagnostic = FALSE,
   ...
 )
 
@@ -125,10 +142,23 @@ emapplot(
   nWords = 4,
   nCluster = NULL,
   show_category_size_legend = TRUE,
+  edge_filter = "threshold",
+  top_k = 5,
+  target_density = 0.1,
+  edge_diagnostic = FALSE,
   ...
 )
 
-prepare_emapplot_data(x, showCategory, color, min_edge, size_edge)
+prepare_emapplot_data(
+  x,
+  showCategory,
+  color,
+  min_edge,
+  size_edge,
+  edge_filter = "threshold",
+  top_k = 5,
+  target_density = 0.1
+)
 }
 \arguments{
 \item{x}{Enrichment result.}
@@ -175,10 +205,22 @@ one of 'category', 'group', 'all' and 'none'.}
 \item{nCluster}{Numeric, the number of clusters,
 the default value is square root of the number of nodes.}
 
-\item{...}{Additional parameters}
-
 \item{show_category_size_legend}{Logical, whether to draw the category-size
 annotation legend for compareCluster pie charts.}
+
+\item{edge_filter}{Edge filtering strategy: \code{"threshold"} (default),
+\code{"top_k"}, or \code{"adaptive"}.}
+
+\item{top_k}{Number of strongest neighbors per term for \code{"top_k"}.}
+
+\item{target_density}{Target proportion of unique term pairs for
+\code{"adaptive"} filtering.}
+
+\item{edge_diagnostic}{Logical; if \code{TRUE}, attach a one-row
+\code{enrichplot_edge_diagnostic} data frame to the returned plot. The
+diagnostic reports retained pairs, rendered edge rows and graph density.}
+
+\item{...}{Additional parameters}
 }
 \value{
 ggplot object
