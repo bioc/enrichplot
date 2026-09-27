@@ -13,16 +13,19 @@ emapplot_edge_density(
 )
 }
 \arguments{
-\item{pair_sim}{A square numeric similarity matrix.}
-\item{min_edge}{Minimum similarity threshold.}
-\item{edge_filter}{One of \code{"threshold"}, \code{"top_k"}, or \code{"adaptive"}.}
-\item{top_k}{Number of strongest neighbors per term in top-k mode.}
-\item{target_density}{Target proportion of unique term pairs in adaptive mode.}
+\item{pair_sim}{square numeric similarity matrix.}
+
+\item{min_edge}{minimum similarity threshold.}
+
+\item{edge_filter}{edge filtering strategy.}
+
+\item{top_k}{number of neighbors per term.}
+
+\item{target_density}{target adaptive density.}
 }
 \value{
-A one-row data.frame reporting possible pairs, retained pairs, rendered edge rows,
-density, filter settings, and a display suggestion.
+A one-row data.frame with retained-pair counts and density.
 }
 \description{
-Diagnose the density of edges retained by an enrichment-map filter.
+Diagnose enrichment-map edge density
 }

@@ -43,27 +43,27 @@ ssplot.compareClusterResult(
 \arguments{
 \item{x}{Enrichment result.}
 
+\item{showCategory}{number of categories to display or a vector of terms.}
+
 \item{...}{additional parameters
 
 Additional plotting parameters are inherited from \code{\link[=emapplot]{emapplot()}}.}
-
-\item{showCategory}{number of categories to display or a vector of terms.}
-
-\item{drfun}{Function used for dimension reduction. The default, \code{stats::cmdscale}, performs classical multidimensional scaling (MDS) and is one available reduction method.}
-
-\item{dr.params}{Named list of arguments passed separately to \code{drfun} via \code{tidydr::dr}.}
 
 \item{min_edge}{Minimum similarity threshold for connecting two nodes.}
 
 \item{size_edge}{Relative size of edge width.}
 
+\item{drfun}{Function used for dimension reduction. The default,
+\code{stats::cmdscale}, performs classical multidimensional scaling (MDS); this
+is one available reduction method.}
+
+\item{dr.params}{Named list of arguments passed separately to \code{drfun} via
+\code{tidydr::dr}.}
+
 \item{node_label}{Select which labels to display,
 one of 'category', 'group', 'all' and 'none'.}
 
 \item{pie}{one of 'equal' or 'Count' to set the slice ratio of the pies}
-}
-\value{
-ggplot object
 }
 \description{
 Similarity Space Plot for enrichment analysis
