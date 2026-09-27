@@ -18,6 +18,7 @@
   size_edge = 0.5,
   categorySizeBy = ~itemNum,
   node_label = "all",
+  node_label_size = NULL,
   foldChange = NULL,
   fc_threshold = NULL,
   hilight = "none",
@@ -37,6 +38,7 @@
   size_edge = 0.5,
   categorySizeBy = ~itemNum,
   node_label = "all",
+  node_label_size = NULL,
   foldChange = NULL,
   fc_threshold = NULL,
   hilight = "none",
@@ -56,13 +58,11 @@
   size_edge = 0.5,
   categorySizeBy = ~itemNum,
   node_label = "all",
+  node_label_size = NULL,
   foldChange = NULL,
   fc_threshold = NULL,
   hilight = "none",
   hilight_alpha = 0.3,
-  pie = "equal",
-  split = NULL,
-  includeAll = TRUE,
   ...
 )
 }
@@ -92,6 +92,9 @@
 \item{node_label}{one of 'all', 'none', 'category', 'item', 'exclusive' or 'share'.
 'exclusive' labels genes that uniquely belong to categories; 'share' labels genes that are shared between categories.}
 
+\item{node_label_size}{size of category/item labels, or \code{NULL} for the
+ggtangle default.}
+
 \item{foldChange}{numeric values to color the item (e.g., fold change of gene expression values)}
 
 \item{fc_threshold}{threshold for filtering genes by absolute fold change (e.g., fc_threshold = 1 keeps only genes with |foldChange| > 1).}
@@ -100,15 +103,8 @@
 
 \item{hilight_alpha}{transparency value for non-highlighted items}
 
-\item{...}{additional parameters}
-
-\item{pie}{one of 'equal' or 'Count' to set the slice ratio of the pies}
-
-\item{split}{apply \code{showCategory} to each category specified by \code{split} for
-\code{compareClusterResult}, e.g. \code{ONTOLOGY}, \code{category} or \code{intersect}.}
-
-\item{includeAll}{logical value passed to \code{fortify()} when selecting terms
-from a \code{compareClusterResult}.}
+\item{...}{additional parameters. For \code{compareClusterResult}, \code{pie}, \code{split},
+and \code{includeAll} may be supplied through these additional parameters.}
 }
 \description{
 Category-gene-network plot

@@ -46,25 +46,28 @@ emapplot_internal(
 
 \item{showCategory}{number of categories to display or a vector of terms.}
 
-\item{coords}{Optional coordinate data.frame with \code{x}, \code{y} columns and row names matching node labels.}
-
 \item{layout}{igraph layout}
+
+\item{coords}{Optional coordinate data.frame with \code{x}, \code{y} columns and row
+names matching node labels.}
 
 \item{color}{Variable used to color enriched terms, e.g. 'pvalue',
 'p.adjust' or 'qvalue'.}
 
 \item{size_category}{relative size of the categories}
 
-\item{min_edge}{The minimum similarity threshold for whether
-two nodes are connected, should be between 0 and 1, default value is 0.2.}
+\item{min_edge}{The minimum similarity threshold for whether two nodes are
+connected, between 0 and 1 (default 0.2).}
 
-\item{edge_filter}{Edge filtering strategy: \code{"threshold"} (default), \code{"top_k"}, or \code{"adaptive"}.}
+\item{edge_filter}{Edge filtering strategy: \code{"threshold"} (default),
+\code{"top_k"}, or \code{"adaptive"}.}
 
 \item{top_k}{Number of strongest neighbors per term in top-k mode.}
 
 \item{target_density}{Target proportion of unique term pairs in adaptive mode.}
 
-\item{edge_diagnostic}{Logical; attach a density data.frame to the returned plot when \code{TRUE}.}
+\item{edge_diagnostic}{Logical; attach a density data.frame to the returned
+plot when \code{TRUE}.}
 
 \item{color_edge}{color of the network edge}
 

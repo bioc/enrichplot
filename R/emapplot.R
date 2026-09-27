@@ -31,6 +31,8 @@ setMethod(
 
 #' @rdname emapplot
 #' @param layout igraph layout
+#' @param coords Optional coordinate data.frame with `x`, `y` columns and row
+#' names matching node labels.
 #' @param color Variable used to color enriched terms, e.g. 'pvalue',
 #' 'p.adjust' or 'qvalue'.
 #' @param size_category relative size of the categories

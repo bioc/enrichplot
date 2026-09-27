@@ -16,15 +16,14 @@
 #'   `compareClusterResult`, this controls the category pie size.
 #' @param node_label one of 'all', 'none', 'category', 'item', 'exclusive' or 'share'.
 #' 'exclusive' labels genes that uniquely belong to categories; 'share' labels genes that are shared between categories.
+#' @param node_label_size size of category/item labels, or `NULL` for the
+#'   ggtangle default.
 #' @param foldChange numeric values to color the item (e.g., fold change of gene expression values)
 #' @param fc_threshold threshold for filtering genes by absolute fold change (e.g., fc_threshold = 1 keeps only genes with |foldChange| > 1).
 #' @param hilight selected categories to be highlighted
 #' @param hilight_alpha transparency value for non-highlighted items
-#' @param split apply `showCategory` to each category specified by `split` for
-#'   `compareClusterResult`, e.g. `ONTOLOGY`, `category` or `intersect`.
-#' @param includeAll logical value passed to `fortify()` when selecting terms
-#'   from a `compareClusterResult`.
-#' @param ... additional parameters
+#' @param ... additional parameters. For `compareClusterResult`, `pie`, `split`,
+#'   and `includeAll` may be supplied through these additional parameters.
 #' @importFrom ggtangle cnetplot
 #' @method cnetplot enrichResult
 #' @export
@@ -42,6 +41,7 @@ cnetplot.enrichResult <- function(
     size_edge = .5,
     categorySizeBy = ~itemNum,
     node_label = "all",
+    node_label_size = NULL,
     foldChange = NULL,
     fc_threshold = NULL,
     hilight = "none",
@@ -80,6 +80,7 @@ cnetplot.enrichResult <- function(
         color_edge = color_edge,
         size_edge = size_edge,
         node_label = node_label,
+        node_label_size = node_label_size,
         hilight = hilight,
         hilight_alpha = hilight_alpha,
         categorySizeBy = categorySizeBy
@@ -112,7 +113,6 @@ cnetplot.enrichResult <- function(
 cnetplot.gseaResult <- cnetplot.enrichResult
 
 #' @rdname cnetplot
-#' @param pie one of 'equal' or 'Count' to set the slice ratio of the pies
 #' @method cnetplot compareClusterResult
 #' @export
 cnetplot.compareClusterResult <- function(
@@ -127,15 +127,18 @@ cnetplot.compareClusterResult <- function(
     size_edge = .5,
     categorySizeBy = ~itemNum,
     node_label = "all",
+    node_label_size = NULL,
     foldChange = NULL,
     fc_threshold = NULL,
     hilight = "none",
     hilight_alpha = .3,
-    pie = "equal",
-    split = NULL,
-    includeAll = TRUE,
     ...
 ) {
+    dots <- list(...)
+    pie <- if ("pie" %in% names(dots)) dots$pie else "equal"
+    split <- if ("split" %in% names(dots)) dots$split else NULL
+    includeAll <- if ("includeAll" %in% names(dots)) dots$includeAll else TRUE
+    dots[c("pie", "split", "includeAll")] <- NULL
     category_size_quo <- rlang::enquo(categorySizeBy)
     d <- tidy_compareCluster(
         x,
@@ -147,22 +150,28 @@ cnetplot.compareClusterResult <- function(
     gs <- lapply(y, function(item) unique(unlist(strsplit(item, split = "/"))))
     category_size <- compute_comparecluster_category_size(d, category_size_quo)
 
-    p <- cnetplot(
-        gs,
-        layout = layout,
-        showCategory = names(gs),
-        foldChange = foldChange,
-        fc_threshold = fc_threshold,
-        color_category = color_category,
-        size_category = 0,
-        color_item = color_item,
-        size_item = 0,
-        color_edge = color_edge,
-        size_edge = size_edge,
-        node_label = "none",
-        hilight = hilight,
-        hilight_alpha = hilight_alpha,
-        ...
+    p <- do.call(
+        cnetplot,
+        c(
+            list(
+                x = gs,
+                layout = layout,
+                showCategory = names(gs),
+                foldChange = foldChange,
+                fc_threshold = fc_threshold,
+                color_category = color_category,
+                size_category = 0,
+                color_item = color_item,
+                size_item = 0,
+                color_edge = color_edge,
+                size_edge = size_edge,
+                node_label = "none",
+                node_label_size = node_label_size,
+                hilight = hilight,
+                hilight_alpha = hilight_alpha
+            ),
+            dots
+        )
     )
 
     p <- add_node_pie(
