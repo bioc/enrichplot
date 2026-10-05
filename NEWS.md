@@ -1,3 +1,17 @@
+# enrichplot 1.99.7.9001
+
++ `import_fgsea()` test suite: strengthen the rank-contract assertions
+  added in 1.99.7.9000 against two silent-regression vectors that were
+  still unguarded: `expect_type(result$rank, "integer")` rejects type
+  drift (e.g. numeric `0` or `NA_real_` in place of the canonical `0L`
+  integer sentinel) and `expect_false(anyNA(result$rank))` rejects any
+  accidental re-introduction of an `NA_integer_` sentinel — the exact
+  class of regression seen in enrichit 0.2.5.9005. Failures now point
+  directly at the contract violation instead of the ambiguous
+  `expect_true(NA)` error produced by the `all(rank >= 0L)` check in
+  isolation.
+  (2026-10-05, Mon, TRAE Code Review closes issue I1 / 1.99.7.9000)
+
 # enrichplot 1.99.7.9000
 
 + `import_fgsea()` test suite: update the `all(result$rank > 0)` assertion in
