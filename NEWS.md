@@ -1,28 +1,21 @@
 # enrichplot 1.99.7.9001
 
-+ `import_fgsea()` test suite: strengthen the rank-contract assertions
-  added in 1.99.7.9000 against two silent-regression vectors that were
-  still unguarded: `expect_type(result$rank, "integer")` rejects type
-  drift (e.g. numeric `0` or `NA_real_` in place of the canonical `0L`
-  integer sentinel) and `expect_false(anyNA(result$rank))` rejects any
-  accidental re-introduction of an `NA_integer_` sentinel — the exact
-  class of regression seen in enrichit 0.2.5.9005. Failures now point
-  directly at the contract violation instead of the ambiguous
-  `expect_true(NA)` error produced by the `all(rank >= 0L)` check in
-  isolation.
-  (2026-10-05, Mon, TRAE Code Review closes issue I1 / 1.99.7.9000)
-
-# enrichplot 1.99.7.9000
-
-+ `import_fgsea()` test suite: update the `all(result$rank > 0)` assertion in
-  `test-converters.R` to `all(result$rank >= 0L)` with an in-line comment
-  documenting that `rank == 0L` is the canonical no-signal sentinel —
-  "no usable weighted in-set signal for this pathway" (YuLab-SMU/DOSE#46
-  semantics: `N_R=0`, empty gene-set overlap, non-finite running score).
-  This aligns `enrichplot` with the `enrichit` 0.2.5.9006 regression fix
-  that restores the documented `0L` sentinel after a brief `NA_integer_`
-  detour in enrichit 0.2.5.9005.
-  (2026-10-05, Mon, align with YuLab-SMU/enrichit 0.2.5.9006)
++ Align `import_fgsea()` test suite with the enrichit GSEA leading-edge
+  contract written for YuLab-SMU/DOSE#46:
+  - The rank-vector assertions in `tests/testthat/test-converters.R` now
+    check, in order: `expect_type(result$rank, "integer")`,
+    `expect_false(anyNA(result$rank))`, `expect_true(all(rank >= 0L))`.
+  - The final check carries an in-line comment documenting the canonical
+    `rank == 0L` no-signal sentinel — "no usable weighted in-set
+    signal for this pathway" (`N_R == 0`, empty gene-set overlap, or a
+    non-finite running score; matches enrichit >= 0.2.5.9008).
+  - Together the three assertions guard against silent type drift (numeric
+    `0` or `NA_real_` leaking in for the documented integer sentinel)
+    and against accidental re-introduction of an `NA_integer_` sentinel
+    that would collapse `all(c(NA, 4) >= 0L)` to `NA` instead of a
+    clean boolean.
+  (2026-10-05, Mon, TRAE Code Review closes issue I1; aligns with
+  YuLab-SMU/enrichit >= 0.2.5.9008)
 
 # enrichplot 1.99.7
 
