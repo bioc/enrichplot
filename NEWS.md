@@ -1,3 +1,15 @@
+# enrichplot 1.99.7.9000
+
++ `import_fgsea()` test suite: update the `all(result$rank > 0)` assertion in
+  `test-converters.R` to `all(result$rank >= 0L)` with an in-line comment
+  documenting that `rank == 0L` is the canonical no-signal sentinel —
+  "no usable weighted in-set signal for this pathway" (YuLab-SMU/DOSE#46
+  semantics: `N_R=0`, empty gene-set overlap, non-finite running score).
+  This aligns `enrichplot` with the `enrichit` 0.2.5.9006 regression fix
+  that restores the documented `0L` sentinel after a brief `NA_integer_`
+  detour in enrichit 0.2.5.9005.
+  (2026-10-05, Mon, align with YuLab-SMU/enrichit 0.2.5.9006)
+
 # enrichplot 1.99.7
 
 + add opt-in `threshold`, `top_k` and `adaptive` edge filters to `emapplot()` and `ssplot()`; `top_k` keeps strongest per-term neighbors, while `adaptive` targets a configurable graph density without changing the similarity matrix or dimension-reduction input (2026-09-27, Sun)

@@ -105,7 +105,10 @@ test_that("import_fgsea maps fgsea result to gseaResult", {
     expect_true(all(c("rank", "leading_edge", "core_enrichment", "setSize") %in%
         colnames(x@result)))
     expect_equal(x@result$core_enrichment[1], "G1/G2")
-    expect_true(all(x@result$rank > 0))
+    expect_true(all(x@result$rank >= 0L))
+    ## rank == 0L is a documented sentinel: "no usable weighted in-set signal
+    ## for this pathway" (YuLab-SMU/DOSE#46: N_R=0, empty gene-set overlap,
+    ## non-finite running score); rank is a positive integer otherwise.
     expect_equal(x@result$setSize, c(3, 3))
 
     ## without geneSets, rebuilt from leading edge with a warning
