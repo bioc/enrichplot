@@ -1,5 +1,22 @@
-# enrichplot 1.99.7.9001
+# enrichplot 1.99.8
 
++ `emapplot()` / `ssplot()` no longer require the suggested `ggforce` package,
+  and the grouping controls are consolidated on `node_label`:
+  - when `ggforce` is not installed the group outline falls back to
+    `ggplot2::stat_ellipse()`. Grouping is on by default in `ssplot()`, so the
+    previous unconditional `check_installed("ggforce")` made the default call
+    abort on a machine without a merely suggested package.
+  - `node_label = "category_grouped"` replaces `group = TRUE` (outline the
+    groups, label the categories); `group = FALSE` is `node_label = "none"`.
+    `group` still works but now warns as deprecated.
+  - an unknown `node_label` is an error instead of silently drawing nothing,
+    and a non-default `top_k` / `target_density` that the selected
+    `edge_filter` does not use warns instead of being dropped silently.
+  - group labels are now always added by `emapplot()` itself, so `"all"`
+    labels the groups exactly as `"group"` does, and the `node_label` values
+    together with their outlines and labels are tabulated in `?emapplot` and
+    `?ssplot`.
+  (2026-10-09, Fri)
 + Align `import_fgsea()` test suite with the enrichit GSEA leading-edge
   contract written for YuLab-SMU/DOSE#46:
   - The rank-vector assertions in `tests/testthat/test-converters.R` now
@@ -14,8 +31,8 @@
     and against accidental re-introduction of an `NA_integer_` sentinel
     that would collapse `all(c(NA, 4) >= 0L)` to `NA` instead of a
     clean boolean.
-  (2026-10-05, Mon, TRAE Code Review closes issue I1; aligns with
-  YuLab-SMU/enrichit >= 0.2.5.9008)
+  (2026-10-05, Mon, aligns with
+  YuLab-SMU/enrichit >= 0.2.6)
 
 # enrichplot 1.99.7
 

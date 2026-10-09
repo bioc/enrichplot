@@ -403,8 +403,71 @@ test_that("pairwise_termsim fills the similarity matrix offline via JC", {
 test_that("emapplot / ssplot / treeplot run on JC similarity", {
     x <- pairwise_termsim(make_rich_enrich_result(), method = "JC")
     expect_ggplot(emapplot(x, showCategory = 8, nCluster = 2))
+    ## "all" draws the ellipses *and* labels the groups through add_ellipse()
+    expect_ggplot(emapplot(x, showCategory = 8, node_label = "all", nCluster = 2))
     expect_ggplot(ssplot(x, showCategory = 8))
     expect_ggplot(treeplot(x, showCategory = 8, nCluster = 2))
+})
+
+test_that("emapplot() draws exactly the label layers node_label asks for", {
+    x <- pairwise_termsim(make_rich_enrich_result(), method = "JC")
+    shape <- function(nl) {
+        p <- emapplot(x, showCategory = 8, node_label = nl, nCluster = 2)
+        geoms <- vapply(p$layers, function(l) class(l$geom)[1], character(1))
+        c(text = sum(grepl("Text", geoms)),
+          ellipse = sum(grepl("MarkEllipse|Polygon", geoms)))
+    }
+    expect_equal(as.numeric(shape("none")),     c(0, 0))
+    expect_equal(as.numeric(shape("category")), c(1, 0))
+    expect_equal(as.numeric(shape("group")),    c(1, 1))
+    ## "all" labels the groups and the categories, and both label layers are
+    ## added by emapplot() itself, not by the outline layer
+    expect_equal(as.numeric(shape("all")),      c(2, 1))
+})
+
+test_that("emapplot() / ssplot() surface ignored arguments once per call", {
+    x <- pairwise_termsim(make_rich_enrich_result(), method = "JC")
+
+    ## `top_k` is meaningless outside `edge_filter = "top_k"`
+    expect_warning(emapplot(x, showCategory = 8, top_k = 10), "top_k.*is ignored")
+    expect_warning(emapplot(x, showCategory = 8, target_density = 0.3),
+                   "target_density.*is ignored")
+    ## ssplot() funnels through the same single check
+    expect_warning(ssplot(x, showCategory = 8, top_k = 10), "top_k.*is ignored")
+    ## the deprecated compatibility argument still works, but says so
+    expect_warning(emapplot(x, showCategory = 8, group = TRUE), "deprecated")
+    ## ssplot() forwards `group` through `...` to the same check
+    expect_warning(ssplot(x, showCategory = 8, group = TRUE), "deprecated")
+})
+
+test_that("category_grouped draws the outline and labels the categories", {
+    x <- pairwise_termsim(make_rich_enrich_result(), method = "JC")
+    shape <- function(nl) {
+        p <- emapplot(x, showCategory = 8, node_label = nl, nCluster = 2)
+        geoms <- vapply(p$layers, function(l) class(l$geom)[1], character(1))
+        c(text = sum(grepl("Text", geoms)),
+          ellipse = sum(grepl("MarkEllipse|Polygon", geoms)))
+    }
+    ## same layer shape as the deprecated group = TRUE + node_label = "category"
+    expect_equal(as.numeric(shape("category_grouped")), c(1, 1))
+})
+
+test_that("grouped emapplot() / ssplot() render without ggforce", {
+    ## ggforce is only suggested, but grouping is on by default in ssplot(),
+    ## so the missing-package path must not abort the plot.
+    x <- pairwise_termsim(make_rich_enrich_result(), method = "JC")
+
+    with_mocked_bindings(
+        expect_ggplot(ssplot(x, showCategory = 8)),
+        .has_ggforce = function() FALSE,
+        .package = "enrichplot"
+    )
+    with_mocked_bindings(
+        expect_ggplot(emapplot(x, showCategory = 8, node_label = "all",
+                               nCluster = 2)),
+        .has_ggforce = function() FALSE,
+        .package = "enrichplot"
+    )
 })
 
 test_that("treeplot compareCluster heatMap panels run", {

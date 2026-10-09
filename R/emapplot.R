@@ -256,22 +256,35 @@ setMethod(
 #' @param size_category relative size of the categories
 #' @param min_edge The minimum similarity threshold for whether
 #' two nodes are connected, should be between 0 and 1, default value is 0.2.
-#' @param edge_filter Edge filtering strategy: `"threshold"` (default),
-#' `"top_k"`, or `"adaptive"`.
-#' @param top_k Number of strongest neighbors per term for `"top_k"`.
-#' @param target_density Target proportion of unique term pairs for
-#' `"adaptive"` filtering.
+#' @param edge_filter Edge filtering strategy. `min_edge` applies to all three;
+#' `top_k` only applies to `"top_k"` and `target_density` only to `"adaptive"`.
+#' Supplying a non-default value for the inactive one warns rather than being
+#' ignored silently.
+#' @param top_k Number of strongest neighbors per term. Only used when
+#' `edge_filter = "top_k"`.
+#' @param target_density Target proportion of unique term pairs. Only used when
+#' `edge_filter = "adaptive"`.
 #' @param edge_diagnostic Logical; if `TRUE`, attach a one-row
 #'   `enrichplot_edge_diagnostic` data frame to the returned plot. The
 #'   diagnostic reports retained pairs, rendered edge rows and graph density.
 #' @param color_edge color of the network edge
 #' @param size_edge relative size of edge width
-#' @param node_label Select which labels to display,
-#' one of 'category', 'group', 'all' and 'none'.
+#' @param node_label Select which labels to display and whether the groups are
+#' outlined. One of:
+#'
+#'   | `node_label` | group outline | group labels | category labels |
+#'   | --- | --- | --- | --- |
+#'   | `"none"` | no | no | no |
+#'   | `"category"` | no | no | yes |
+#'   | `"category_grouped"` | yes | no | yes |
+#'   | `"group"` | yes | yes | no |
+#'   | `"all"` | yes | yes | yes |
+#'
 #' @param node_label_size size of node label, default is 5.
 #' @param pie one of 'equal' or 'Count' to set the slice ratio of the pies
 #' @param layer optional layer or layers to retain for `mnseaResult` plots.
-#' @param group logical, if TRUE, group the categories.
+#' @param group Deprecated. `group = TRUE` is `node_label = "category_grouped"`;
+#' `group = FALSE` is `node_label = "none"`. Use `node_label` instead.
 #' @param group_legend logical, if TRUE, draw a legend for the groups.
 #' @param label_format a numeric value sets wrap length, alternatively a custom function to format axis labels.
 #' @param clusterFunction clustering method function, such as `stats::kmeans` (default),
@@ -443,6 +456,86 @@ prepare_emapplot_mnsea_data <- function(
     )
 }
 
+## Decide how grouped nodes are drawn from the user-facing `node_label` and the
+## compatibility argument `group`.  Pure function, kept out of
+## `emapplot_internal()` so every combination can be checked without building a
+## plot -- this logic has been the source of past regressions (#292, #339).
+## Returns:
+##   group_enabled  - draw the group outline (and compute `node_data`)
+##   group_label    - draw one label per group (for "group" and "all")
+##   category_label - draw one label per category (for "category",
+##                   "category_grouped" and "all")
+## Every label is added by `emapplot_internal()` itself, so the outline layer
+## and the label layers no longer depend on one another.
+.resolve_group_display <- function(node_label, group = NULL) {
+    node_label <- match.arg(
+        node_label,
+        c("category", "group", "all", "none", "category_grouped")
+    )
+    was_all <- identical(node_label, "all")
+
+    ## "category_grouped" is the `node_label` spelling of the deprecated
+    ## `group = TRUE` + `node_label = "category"`: outline the groups, but keep
+    ## labelling the categories.
+    group_enabled <- node_label %in% c("group", "all", "category_grouped")
+
+    if (!is.null(group)) {
+        group_enabled <- isTRUE(group)
+        if (!group_enabled && node_label == "group") {
+            node_label <- "none"
+        }
+    }
+
+    ## `node_label = "all"` wins over `group`: it always groups, and labels both
+    ## the groups and the categories.
+    if (was_all) {
+        group_enabled <- TRUE
+        node_label <- "category"
+    }
+
+    list(
+        group_enabled = group_enabled,
+        group_label = was_all || identical(node_label, "group"),
+        category_label = node_label %in% c("category", "category_grouped")
+    )
+}
+
+## Report argument combinations that would otherwise be dropped silently, plus
+## the deprecated `group` argument.  Called once from `emapplot_internal()` so
+## that every user-facing entry point (`emapplot()`, `ssplot()`) is covered
+## exactly once per call.
+.emapplot_arg_notices <- function(edge_filter, top_k, target_density, group) {
+    edge_filter <- match.arg(edge_filter, c("threshold", "top_k", "adaptive"))
+
+    if (!is.null(group)) {
+        yulab.utils::yulab_warn(c(
+            "The `group` argument is deprecated.",
+            "i" = paste0(
+                "Use `node_label` instead: \"category_grouped\" for ",
+                "`group = TRUE`, and \"none\" for `group = FALSE`."
+            )
+        ), class = "deprecatedGroupArgument")
+    }
+
+    ## `min_edge` applies to every mode, so it is never reported here.
+    if (edge_filter != "top_k" && !isTRUE(all.equal(as.numeric(top_k), 5))) {
+        yulab.utils::yulab_warn(c(
+            sprintf("`top_k` is ignored because `edge_filter` is \"%s\".", edge_filter),
+            "i" = "`top_k` only applies when `edge_filter = \"top_k\"`."
+        ), class = "ignoredEdgeParameter")
+    }
+    if (edge_filter != "adaptive" &&
+        !isTRUE(all.equal(as.numeric(target_density), 0.1))) {
+        yulab.utils::yulab_warn(c(
+            sprintf("`target_density` is ignored because `edge_filter` is \"%s\".",
+                    edge_filter),
+            "i" = "`target_density` only applies when `edge_filter = \"adaptive\"`."
+        ), class = "ignoredEdgeParameter")
+    }
+
+    invisible(TRUE)
+}
+
 emapplot_internal <- function(
     x,
     layout = igraph::layout_with_kk,
@@ -469,6 +562,8 @@ emapplot_internal <- function(
     show_category_size_legend = TRUE,
     edge_diagnostic = FALSE
 ) {
+    .emapplot_arg_notices(edge_filter, top_k, target_density, group)
+
     if (length(edge_diagnostic) != 1L || is.na(edge_diagnostic) ||
         !is.logical(edge_diagnostic)) {
         stop('"edge_diagnostic" should be a single logical value.')
@@ -605,20 +700,10 @@ emapplot_internal <- function(
         }
     }
 
-    group_enabled <- node_label %in% c("group", "all")
-    if (!is.null(group)) {
-        group_enabled <- isTRUE(group)
-        if (!group_enabled && node_label == "group") {
-            node_label <- "none"
-        }
-    }
-
-    group_label <- FALSE
-    if (node_label == "all") {
-        group_enabled <- TRUE
-        group_label <- TRUE
-        node_label <- "category"
-    }
+    display <- .resolve_group_display(node_label, group)
+    group_enabled <- display$group_enabled
+    group_label <- display$group_label
+    category_label <- display$category_label
 
     if (group_enabled) {
         if (inherits(x, 'compareClusterResult')) {
@@ -637,13 +722,12 @@ emapplot_internal <- function(
         p <- p +
             add_ellipse(
                 node_data,
-                group_legend = group_legend,
-                label = group_label
+                group_legend = group_legend
             )
     }
 
     ## add node label
-    if (node_label == "category") {
+    if (category_label) {
         p <- p +
             geom_text_repel(
                 aes(label = .data$label),
@@ -653,7 +737,7 @@ emapplot_internal <- function(
             )
     }
     ## add group label
-    if (node_label == "group") {
+    if (group_label) {
         label_location <- get_label_location(
             node_data = node_data,
             label_format = label_format

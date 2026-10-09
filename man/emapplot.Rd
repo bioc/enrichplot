@@ -182,12 +182,20 @@ two nodes are connected, should be between 0 and 1, default value is 0.2.}
 
 \item{size_edge}{relative size of edge width}
 
-\item{group}{logical, if TRUE, group the categories.}
+\item{group}{Deprecated. \code{group = TRUE} is \code{node_label = "category_grouped"};
+\code{group = FALSE} is \code{node_label = "none"}. Use \code{node_label} instead.}
 
 \item{group_legend}{logical, if TRUE, draw a legend for the groups.}
 
-\item{node_label}{Select which labels to display,
-one of 'category', 'group', 'all' and 'none'.}
+\item{node_label}{Select which labels to display and whether the groups are
+outlined. One of:\tabular{llll}{
+   \code{node_label} \tab group outline \tab group labels \tab category labels \cr
+   \code{"none"} \tab no \tab no \tab no \cr
+   \code{"category"} \tab no \tab no \tab yes \cr
+   \code{"category_grouped"} \tab yes \tab no \tab yes \cr
+   \code{"group"} \tab yes \tab yes \tab no \cr
+   \code{"all"} \tab yes \tab yes \tab yes \cr
+}}
 
 \item{node_label_size}{size of node label, default is 5.}
 
@@ -208,13 +216,16 @@ the default value is square root of the number of nodes.}
 \item{show_category_size_legend}{Logical, whether to draw the category-size
 annotation legend for compareCluster pie charts.}
 
-\item{edge_filter}{Edge filtering strategy: \code{"threshold"} (default),
-\code{"top_k"}, or \code{"adaptive"}.}
+\item{edge_filter}{Edge filtering strategy. \code{min_edge} applies to all three;
+\code{top_k} only applies to \code{"top_k"} and \code{target_density} only to \code{"adaptive"}.
+Supplying a non-default value for the inactive one warns rather than being
+ignored silently.}
 
-\item{top_k}{Number of strongest neighbors per term for \code{"top_k"}.}
+\item{top_k}{Number of strongest neighbors per term. Only used when
+\code{edge_filter = "top_k"}.}
 
-\item{target_density}{Target proportion of unique term pairs for
-\code{"adaptive"} filtering.}
+\item{target_density}{Target proportion of unique term pairs. Only used when
+\code{edge_filter = "adaptive"}.}
 
 \item{edge_diagnostic}{Logical; if \code{TRUE}, attach a one-row
 \code{enrichplot_edge_diagnostic} data frame to the returned plot. The

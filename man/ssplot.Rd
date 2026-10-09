@@ -126,8 +126,15 @@ needed.}
 \item{dr.params}{A named list of arguments passed separately to \code{drfun} via
 \code{tidydr::dr}.}
 
-\item{node_label}{Select which labels to display,
-one of 'category', 'group', 'all' and 'none'.}
+\item{node_label}{Select which labels to display and whether the groups are
+outlined. One of:\tabular{llll}{
+   \code{node_label} \tab group outline \tab group labels \tab category labels \cr
+   \code{"none"} \tab no \tab no \tab no \cr
+   \code{"category"} \tab no \tab no \tab yes \cr
+   \code{"category_grouped"} \tab yes \tab no \tab yes \cr
+   \code{"group"} \tab yes \tab yes \tab no \cr
+   \code{"all"} \tab yes \tab yes \tab yes \cr
+}}
 
 \item{pie}{one of 'equal' or 'Count' to set the slice ratio of the pies}
 }

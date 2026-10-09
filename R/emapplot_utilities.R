@@ -518,14 +518,21 @@ groupNode <- function(
     return(node_data)   
 }
 
+## Is the optional `ggforce` available?  Kept as a one-line helper so that the
+## dependency-free fallback in `add_ellipse()` can be exercised in tests
+## without uninstalling ggforce.
+.has_ggforce <- function() {
+    requireNamespace("ggforce", quietly = TRUE)
+}
+
 #' Add ellipse to group nodes
+#'
+#' The outline only: group labels are added by `emapplot_internal()` itself, so
+#' the layer stays independent of the labelling.
 #'
 #' @param node_data node data frame
 #' @param group_legend Logical, if TRUE, the grouping legend will be displayed.
 #' The default is FALSE.
-#' @param label logical, TRUE to label the ellipse (default)
-#' @param ellipse_style style of ellipse, one of "ggforce" and "polygon".
-#' @param ellipse_pro numeric indicating confidence value for the ellipses
 #' @param alpha the transparency of ellipse fill.
 #' @importFrom rlang check_installed
 #' @importFrom ggplot2 scale_fill_discrete
@@ -533,62 +540,45 @@ groupNode <- function(
 add_ellipse <- function(
     node_data,
     group_legend,
-    label = TRUE,
-    ellipse_style = "ggforce",
-    # ellipse_pro = 0.95,
-    alpha = 0.3,
-    ...
+    alpha = 0.3
 ) {
     show_legend <- c(group_legend, FALSE)
     names(show_legend) <- c("fill", "color")
-    ellipse_style <- match.arg(ellipse_style, c("ggforce", "polygon"))
 
-    require_suggested('ggforce', 'for `add_ellipse()`.');
-
-    if (ellipse_style == "ggforce") {
-        if (label) {
-            p <- ggforce::geom_mark_ellipse(
-                data = node_data,
-                aes(
-                    x = !!sym('x'),
-                    y = !!sym('y'),
-                    fill = !!sym('color2'),
-                    label = !!sym('color2')
-                ),
-                alpha = alpha,
-                color = NA,
-                show.legend = show_legend
-            )
-        } else {
-            p <- ggforce::geom_mark_ellipse(
-                data = node_data,
-                aes(x = !!sym('x'), y = !!sym('y'), fill = !!sym('color2')),
-                alpha = alpha,
-                color = NA,
-                show.legend = show_legend
-            )
-        }
-    }
-
-    # not in used
-    if (FALSE && ellipse_style == "polygon") {
-        ellipse_pro <- 0.95  # Define default ellipse_pro value
-        p <- ggplot2::stat_ellipse(
+    if (.has_ggforce()) {
+        layers <- list(ggforce::geom_mark_ellipse(
             data = node_data,
             aes(x = !!sym('x'), y = !!sym('y'), fill = !!sym('color2')),
-            geom = "polygon",
-            level = ellipse_pro,
             alpha = alpha,
-            show.legend = group_legend,
-            ...
-        )
+            color = NA,
+            show.legend = show_legend
+        ))
+    } else {
+        ## `ggforce` is only suggested, but grouping is on by default in
+        ## `ssplot()`, so a missing ggforce must not break the plot.  Fall back
+        ## to `stat_ellipse()`, which ships with ggplot2.
+        layers <- list(ggplot2::stat_ellipse(
+            data = node_data,
+            aes(
+                x = !!sym('x'),
+                y = !!sym('y'),
+                fill = !!sym('color2'),
+                group = !!sym('color2')
+            ),
+            geom = "polygon",
+            alpha = alpha,
+            show.legend = show_legend
+        ))
     }
 
     if (group_legend) {
-        p <- list(p, scale_fill_discrete(name = "groups"))
+        layers <- c(layers, list(scale_fill_discrete(name = "groups")))
     }
 
-    return(p)
+    if (length(layers) == 1L) {
+        return(layers[[1L]])
+    }
+    return(layers)
 }
 
 
