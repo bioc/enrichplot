@@ -317,6 +317,29 @@ test_that("cnetplot compareCluster categorySizeBy formula keeps its environment"
     expect_ggplot(p3)
 })
 
+test_that("cnetplot on a plain gene-set list accepts legacy categorySize (#346)", {
+    ## R partial-matches the legacy `categorySize = "pvalue"` onto the
+    ## generic's `categorySizeBy` formal, so plain-list input used to fail
+    ## with "`categorySizeBy` must evaluate to a numeric vector" (issue #346).
+    skip_if_not(
+        utils::packageVersion("ggtangle") >= "0.1.4.001",
+        "legacy list arguments require ggtangle >= 0.1.4.001"
+    )
+    kk <- list(pathway1 = c("g1", "g2", "g3"), pathway2 = c("g3", "g4"))
+    attr(kk, "pvalue") <- c(pathway1 = 0.01, pathway2 = 0.2)
+
+    expect_no_error(
+        p <- cnetplot(kk, categorySize = "pvalue", node_label = "none")
+    )
+    expect_ggplot(p)
+
+    ## and a list that carries no statistics fails with an actionable message
+    expect_error(
+        cnetplot(list(a = c("g1"), b = c("g2")), categorySize = "pvalue"),
+        "attr"
+    )
+})
+
 test_that("cnetplot compareCluster pies stay stable as showCategory grows", {
     x <- mock_comparecluster_result()
     d <- x@compareClusterResult
