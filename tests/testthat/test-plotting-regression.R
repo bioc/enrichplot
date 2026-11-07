@@ -320,11 +320,8 @@ test_that("cnetplot compareCluster categorySizeBy formula keeps its environment"
 test_that("cnetplot on a plain gene-set list accepts legacy categorySize (#346)", {
     ## R partial-matches the legacy `categorySize = "pvalue"` onto the
     ## generic's `categorySizeBy` formal, so plain-list input used to fail
-    ## with "`categorySizeBy` must evaluate to a numeric vector" (issue #346).
-    skip_if_not(
-        utils::packageVersion("ggtangle") >= "0.1.4.001",
-        "legacy list arguments require ggtangle >= 0.1.4.001"
-    )
+    ## with "`categorySizeBy` must evaluate to a numeric vector" (issue #346;
+    ## fixed in ggtangle 0.1.5).
     kk <- list(pathway1 = c("g1", "g2", "g3"), pathway2 = c("g3", "g4"))
     attr(kk, "pvalue") <- c(pathway1 = 0.01, pathway2 = 0.2)
 
