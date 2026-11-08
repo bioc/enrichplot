@@ -185,11 +185,12 @@ instead of re-deriving commands (they encode the maintainer's workflow):
    direct error instead of a `[[<-` replacement-length crash.
 10. **R partial-matches a legacy argument name onto a newer formal.** Passing
    `cnetplot(x, categorySize = "pvalue")` binds the string onto the `categorySizeBy`
-   formal (its only prefix match), so `...`-based legacy guards never fire and the
-   string dies later as "categorySizeBy must evaluate to a numeric vector"
-   (see `enrichplot#346`, fixed in ggtangle 0.1.4.001). When renaming/deprecating an
-   argument whose old name is a prefix of the new one, handle the legacy *value* at
-   the new formal; guards in `...` are dead code.
+   formal (its only prefix match) already at the generic call, so `...`-based legacy
+   guards never fire and the string dies later as "categorySizeBy must evaluate to
+   a numeric vector". It reproduces on Bioc 1.32.0 + ggtangle 0.1.4 even when `x` is
+   an `enrichResult` (see `enrichplot#346`, fixed in ggtangle 0.1.5 on CRAN).
+   When renaming/deprecating an argument whose old name is a prefix of the new one,
+   handle the legacy *value* at the new formal; guards in `...` are dead code.
 
 ## Conventions
 
